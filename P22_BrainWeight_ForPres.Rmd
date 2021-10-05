@@ -1,0 +1,241 @@
+---
+title: "P22 Offspring Brain Weights, AIN-76A diet with MD or Alcohol and Iron Supplement or Water"
+author: "Kaylee Helfrich"
+date: "2/12/2021"
+output: 
+  pdf_document: default
+  html_document: default
+data: "Offspring_Organ_Weights_P22_CLEAN.csv"
+---
+
+Built with R `r getRversion()`
+
+```{r RMarkdown setup, include = FALSE, message = FALSE}
+require(knitr)
+knitr::opts_chunk$set(echo = TRUE, tidy.opts=list(width.cutoff=60), tidy=TRUE)
+knitr::opts_knit$set(root.dir = "~/KayleeStuff/Smith_Lab/Data/Rat_Iron2/P22P50BrainWeights")
+options(tinytex.verbose = TRUE)
+```
+
+# Graphing P22 Brain Weights
+This document details my graphing of the brain weights on P22 from the postnatal portion of the rat study. This data includes all animals that were collected at P22. The graphs include left and right brain weights (and cerebrum weight), cerebellum weight, total brain weight, and body weight to brain ratio. All data within this analysis was collected by Kaylee Helfrich and Rachel Hodges.
+The study design was as follows. Dams were Long-Evans rats that were dosed with 5g/kg ethanol or isocaloric maltodextrin from GD13.5-19.5 and also received either an iron supplement (6g/kg, Fer-In-Sol) or the same volume of water as a gavage from GD12.5-GD19.5. All graphs are mean with standard deviation, since there are not multiple measures per sample. This analysis will allow us to compare the 4 groups. Statistical analysis in JMP will use 2-way ANOVA to assign significance to the measures (alcohol vs. MD, iron vs. water). 
+
+# Importing Files and Arranging Data
+```{r include = FALSE}
+rm(list=ls())
+setwd("~/KayleeStuff/Smith_Lab/Data/Rat_Iron2/P22P50BrainWeights")
+library(ggplot2)
+library(plotrix)
+library(dplyr)
+library(tidyverse)
+library(extrafont)
+loadfonts(device = "win")
+```
+
+```{r Import file and rearrange by treatment to be alphabetical}
+File <- "Offspring_Organ_Weights_P22_CLEAN.csv"
+data <- read.csv(File, header=TRUE) 
+data_frame <- data.frame(data)
+data_frame <- data_frame[order(data_frame$Exposure), ]
+```
+```{r echo = FALSE}
+print(data_frame)
+```
+```{r Prepare data for graphing}
+ActualGroupOrder <- c("CON", "CON+Iron","PAE", "PAE+Iron")
+```
+
+## Create separate males and females tables
+```{r}
+Males <- data_frame[ which(data_frame$Sex=='M'), ]
+Females <- data_frame[ which(data_frame$Sex=='F'), ]
+```
+
+## Males- Equalize Row Number by Exposure
+```{r}
+#Figure out how many rows of empty NA's are needed to equalize the treatment groups
+Groupcount <- Males %>% count(Exposure) #Calculate how many individual Males there are per treatment group
+NumPoints <- max(Groupcount$n) #Create the variable "NumPoints" to count the # of points in the final graphs
+DiffFunc <- function(x) NumPoints - x #Create the function "DiffFunc" to calculate the number of NA rows to be added
+DiffPoints <- as.data.frame(tapply(Groupcount$n, as.character(Groupcount$Exposure), DiffFunc)) #Calculate number of NA rows to be added to each treatment group
+DiffPoints$Exposure <- ActualGroupOrder #add new column so that # of points to be added is assigned to exposure
+colnames(DiffPoints)[1] <- "NumberN" #rename column
+Nrow <- sum(DiffPoints$NumberN) #figure out how many total rows will be added to the DF_extra dataframe
+MDH2O <- DiffPoints[1,1] #for each of these, it is creating a variable for the "vector" below
+MDFe <- DiffPoints[2,1]
+AlcH2O <- DiffPoints[3,1]
+AlcFe <- DiffPoints[4,1] 
+
+#Add extra rows of NAs to equalize groups
+DF_extra <- data.frame(matrix(NA, nrow = Nrow, ncol = 14)) #create an empty dataframe filled with NA's
+vector <- rep(c("CON", "CON+Iron", "PAE", "PAE+Iron"), times = c(MDH2O, MDFe, AlcH2O, AlcFe)) #create the vector to add the treatment groups to the NA matrix
+DF_extra$Exposure <- vector #add in the Exposure column to the DF_extra dataframe
+DF_extra <- DF_extra[,c(1,15,2:14)] #rearrange the columns so that they are in the same order as the original DF
+DF_extra <- setNames(DF_extra, names(Males)) #set the names of the new df to match the original df
+Males_new <- rbind(Males, DF_extra) #Rbind the 2 dataframes so that we now have equal treatment group sizes
+print(Males_new %>% count(Exposure)) #check that the groups are now equal
+#rearrange to be in order of Treatment, otherwise the dots get accidentally reassigned to the wrong group
+Males_new <- Males_new[order(Males_new$Exposure), ]
+Male_NumPoints <- NumPoints
+```
+### Number of Missing Points to Expect in Male Graphs
+```{r echo = FALSE}
+print(Nrow)
+```
+
+## Females- Equalize Row Number by Exposure
+```{r}
+#Figure out how many rows of empty NA's are needed to equalize the treatment groups
+Groupcount <- Females %>% count(Exposure) #Calculate how many individual Females there are per treatment group
+NumPoints <- max(Groupcount$n) #Create the variable "NumPoints" to count the # of points in the final graphs
+DiffFunc <- function(x) NumPoints - x #Create the function "DiffFunc" to calculate the number of NA rows to be added
+DiffPoints <- as.data.frame(tapply(Groupcount$n, as.character(Groupcount$Exposure), DiffFunc)) #Calculate number of NA rows to be added to each treatment group
+DiffPoints$Exposure <- ActualGroupOrder #add new column so that # of points to be added is assigned to exposure
+colnames(DiffPoints)[1] <- "NumberN" #rename column
+Nrow <- sum(DiffPoints$NumberN) #figure out how many total rows will be added to the DF_extra dataframe
+MDH2O <- DiffPoints[1,1] #for each of these, it is creating a variable for the "vector" below
+MDFe <- DiffPoints[2,1]
+AlcH2O <- DiffPoints[3,1]
+AlcFe <- DiffPoints[4,1] 
+
+#Add extra rows of NAs to equalize groups
+DF_extra <- data.frame(matrix(NA, nrow = Nrow, ncol = 14)) #create an empty dataframe filled with NA's
+vector <- rep(c("CON", "CON+Iron", "PAE", "PAE+Iron"), times = c(MDH2O, MDFe, AlcH2O, AlcFe)) #create the vector to add the treatment groups to the NA matrix
+DF_extra$Exposure <- vector #add in the Exposure column to the DF_extra dataframe
+DF_extra <- DF_extra[,c(1,15,2:14)] #rearrange the columns so that they are in the same order as the original DF
+DF_extra <- setNames(DF_extra, names(Females)) #set the names of the new df to match the original df
+Females_new <- rbind(Females, DF_extra) #Rbind the 2 dataframes so that we now have equal treatment group sizes
+print(Females_new %>% count(Exposure)) #check that the groups are now equal
+#rearrange to be in order of Treatment, otherwise the dots get accidentally reassigned to the wrong group
+Females_new <- Females_new[order(Females_new$Exposure), ]
+Female_NumPoints <- NumPoints
+```
+### Number of Missing Points to Expect in Female Graphs
+```{r echo = FALSE}
+print(Nrow)
+```
+
+# Total Brain  Weight 
+
+## Total Brain  Weight in Males
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+Mean <- tapply(Males_new$Total.Brain.Weight , as.character(Males_new$Exposure), mean, na.rm=TRUE)
+Mean <- as.data.frame(rep(Mean, each = Male_NumPoints))
+Mean$Exposure <- rep(ActualGroupOrder, each = Male_NumPoints)
+colnames(Mean)[1] <- "Mean"
+
+Stdev <- tapply(Males_new$Total.Brain.Weight, as.character(Males_new$Exposure), sd, na.rm=TRUE)
+Stdev <- as.data.frame(rep(Stdev, each = Male_NumPoints))
+Stdev$Exposure <- rep(ActualGroupOrder, each = Male_NumPoints)
+colnames(Stdev)[1] <- "Stdev"
+
+dataframe_combine <- cbind(Mean, Stdev, Males_new$Total.Brain.Weight)
+colnames(dataframe_combine)[5] <- "Value"
+dataframe_combine <- dataframe_combine[-2]
+
+dataframe_combine$Upper <- dataframe_combine$Mean + dataframe_combine$Stdev
+dataframe_combine$Lower <- dataframe_combine$Mean - dataframe_combine$Stdev
+
+#Make Graph#
+png("P22_TotalBrainWtMales_AllData_PAExFe_Dotplot_ForPres.png", units="in", width=4, height=7, res=600) 
+
+sets <- c("CON", "PAE", "CON+Iron", "PAE+Iron")
+
+p<- ggplot(dataframe_combine, aes(x=Exposure, y=Mean)) + 
+  geom_bar(stat="identity", color="black", aes(fill = Exposure),
+           position=position_dodge()) +
+  scale_fill_manual(values=c("CON" = "#BDB8AD",
+                             "PAE" = "#EBE7E0",
+                             "CON+Iron" = "#44749D",
+                             "PAE+Iron" = "#C6D4E1"
+                             )) +
+  geom_errorbar(aes(ymin=Lower, ymax=Upper), width=.2,
+                position=position_dodge(.9)) + 
+  geom_point(aes(x=Exposure, y=Value),
+             size = 1.25, shape = 19, position = position_jitter(width=.15, height = 0)) +
+  scale_y_continuous(expand = c(0,0), limits = c(0,2.1)) +
+  #ggtitle("P22- Total Brain Weight- Males") +
+  ylab(expression("Weight (g)")) + 
+  theme(plot.title = element_text(hjust = 0.5, size=18, family = "Times New Roman"), 
+        axis.title.x = element_blank(), #gets rid of x-axis label
+        axis.title.y = element_text(size = 28),
+        panel.grid.major = element_blank(), #gets rid of major gridlines
+        panel.grid.minor = element_blank(), #gets rid of minor gridlines
+        panel.background = element_blank(), #turns background white instead of gray
+        axis.line = element_line(colour = "black"), 
+        legend.position="none", #gets rid of legend
+        axis.text=element_text(size=24, color = "black", family = "Times New Roman"), #sets size of x and y axis labels
+        axis.text.x=element_text(angle = 45, vjust = .95, hjust = 0.9, family = "Times New Roman"),
+        axis.title=element_text(size=24,face="bold", family = "Times New Roman")) + 
+  scale_x_discrete (limits = sets)
+print(p)
+dev.off() 
+```
+```{r P22 Male Total Brain Weight, echo = FALSE}
+print(p)
+```
+
+## Total Brain  Weight in Females
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+Mean <- tapply(Females_new$Total.Brain.Weight, as.character(Females_new$Exposure), mean, na.rm=TRUE) 
+Mean <- as.data.frame(rep(Mean, each = Female_NumPoints)) 
+Mean$Exposure <- rep(ActualGroupOrder, each = Female_NumPoints)
+colnames(Mean)[1] <- "Mean"
+
+Stdev <- tapply(Females_new$Total.Brain.Weight, as.character(Females_new$Exposure), sd, na.rm=TRUE) 
+Stdev <- as.data.frame(rep(Stdev, each = Female_NumPoints)) 
+Stdev$Exposure <- rep(ActualGroupOrder, each = Female_NumPoints) 
+colnames(Stdev)[1] <- "Stdev" 
+
+dataframe_combine <- cbind(Mean, Stdev, Females_new$Total.Brain.Weight) 
+colnames(dataframe_combine)[5] <- "Value" 
+dataframe_combine <- dataframe_combine[-2] 
+
+dataframe_combine$Upper <- dataframe_combine$Mean + dataframe_combine$Stdev 
+dataframe_combine$Lower <- dataframe_combine$Mean - dataframe_combine$Stdev
+
+#Make Graph#
+png("P22_TotalBrainWtFemales_AllData_PAExFe_Dotplot_ForPres.png", units="in", width=4, height=7, res=600) 
+
+sets <- c("CON", "PAE", "CON+Iron", "PAE+Iron")
+
+p<- ggplot(dataframe_combine, aes(x=Exposure, y=Mean)) + 
+  geom_bar(stat="identity", color="black", aes(fill = Exposure),
+           position=position_dodge()) +
+  scale_fill_manual(values=c("CON" = "#BDB8AD",
+                             "PAE" = "#EBE7E0",
+                             "CON+Iron" = "#44749D",
+                             "PAE+Iron" = "#C6D4E1"
+                             )) +
+  geom_errorbar(aes(ymin=Lower, ymax=Upper), width=.2,
+                position=position_dodge(.9)) + 
+  geom_point(aes(x=Exposure, y=Value),
+             size = 1.25, shape = 19, position = position_jitter(width=.15, height = 0)) +
+  scale_y_continuous(expand = c(0,0), limits = c(0,2.1)) +
+  #ggtitle("P22- Total Brain Weight- Females") +
+  ylab(expression("Weight (g)")) + 
+  theme(plot.title = element_text(hjust = 0.5, size=18, family = "Times New Roman"), 
+        axis.title.x = element_blank(), #gets rid of x-axis label
+        axis.title.y = element_text(size = 28),
+        panel.grid.major = element_blank(), #gets rid of major gridlines
+        panel.grid.minor = element_blank(), #gets rid of minor gridlines
+        panel.background = element_blank(), #turns background white instead of gray
+        axis.line = element_line(colour = "black"), 
+        legend.position="none", #gets rid of legend
+        axis.text=element_text(size=24, color = "black", family = "Times New Roman"), #sets size of x and y axis labels
+        axis.text.x=element_text(angle = 45, vjust = .95, hjust = 0.9, family = "Times New Roman"),
+        axis.title=element_text(size=24,face="bold", family = "Times New Roman")) + 
+  scale_x_discrete (limits = sets)
+print(p)
+dev.off() 
+```
+```{r P22 Female Total Brain Weight, echo = FALSE}
+print(p)
+```
+
+# Session Information
+```{r, echo = FALSE}
+session_info <- devtools::session_info()
+print(session_info)
+```

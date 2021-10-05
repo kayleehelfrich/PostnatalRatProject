@@ -1,0 +1,864 @@
+---
+title: "Fear Conditioning- Cue on Day 3"
+author: "Kaylee Helfrich"
+date: "6/1/2020-2/24/2021"
+output:
+  pdf_document: default
+  html_document: default
+data: "FearConditioning_ALL_DATA_Freezing_ForAnalysis.csv"
+---
+
+Built with R `r getRversion()`
+
+```{r RMarkdown setup, include = FALSE, message = FALSE}
+require(knitr)
+knitr::opts_chunk$set(echo = TRUE, tidy.opts=list(width.cutoff=60), tidy=TRUE)
+knitr::opts_knit$set(root.dir = "~/KayleeStuff/Smith_Lab/Data/Rat_Iron2/Fear_Conditioning")
+options(tinytex.verbose = TRUE)
+```
+
+# Introduction
+This graph shows fear conditioning data from the rat offspring used for behavior testing. This shows only the analysis of the Cue (Day 3) results. The other results are in separate RMarkdown files. The four treatment groups are maltodextrin (MD), prenatal alcohol exposure (PAE), MD+iron, and PAE+iron. These were generated using the standard rat model (PAE or MD at 5g/kg split dose from GD13.5-19.5, and iron dosed at 6mg/kg from GD12.5-19.5). Data are separated into male and female. 
+
+```{r include = FALSE}
+rm(list=ls())
+setwd("~/KayleeStuff/Smith_Lab/Data/Rat_Iron2/Fear_Conditioning")
+library(ggplot2)
+library(plotrix)
+library(dplyr)
+library(tidyverse)
+library(data.table)
+library(extrafont)
+loadfonts(device = "win")
+```
+
+```{r Import file and rearrange by treatment to be alphabetical}
+File <- "FearConditioning_ALL_DATA_Freezing_ForAnalysis.csv"
+data <- read.csv(File, header=TRUE) 
+data_frame <- data.frame(data)
+data_frame <- data_frame[order(data_frame$Exposure), ]
+ActualGroupOrder <- c("CON", "CON+Iron", "PAE", "PAE+Iron")
+```
+```{r echo = FALSE}
+print(data_frame[,c(1:11,25:31)])
+```
+
+## Create separate males and females tables
+```{r}
+Males <- data_frame[ which(data_frame$Sex=='M'), ]
+Females <- data_frame[ which(data_frame$Sex=='F'), ]
+```
+
+# Cue Graphs
+
+## Making a data table to graph results from the male cue test- by minute
+```{r}
+#Cue minute 1 Table
+M.Cue.1 <- Males %>% select(Exposure, Cue.1min)
+M.Cue.1$Phase <- strrep("1-Minute1", 1)
+names(M.Cue.1)[2] <- "Value"
+
+#Cue minute 2 Table
+M.Cue.2 <- Males %>% select(Exposure, Cue.2min)
+M.Cue.2$Phase <- strrep("2-Minute2", 1)
+names(M.Cue.2)[2] <- "Value"
+
+#Cue minute 3 Table
+M.Cue.3 <- Males %>% select(Exposure, Cue.3min)
+M.Cue.3$Phase <- strrep("3-Minute3", 1)
+names(M.Cue.3)[2] <- "Value"
+
+#Cue minute 4 Table
+M.Cue.4 <- Males %>% select(Exposure, Cue.4min)
+M.Cue.4$Phase <- strrep("4-Minute4", 1)
+names(M.Cue.4)[2] <- "Value"
+
+#Cue minute 5 Table
+M.Cue.5 <- Males %>% select(Exposure, Cue.5min)
+M.Cue.5$Phase <- strrep("5-Minute5", 1)
+names(M.Cue.5)[2] <- "Value"
+
+#Combine Tables
+Male.cue.minute <- rbind(M.Cue.1, M.Cue.2, M.Cue.3, M.Cue.4, M.Cue.5)
+neworder <- c("MD", "PAE", "MD+Iron", "PAE+Iron")
+Male.cue.minute <- Male.cue.minute %>%
+  mutate(Exposure =  factor(Exposure, levels = neworder)) %>%
+  arrange(Exposure)
+```
+
+## Making a graph of the male cue by minute results
+```{r}
+png("FC_Male_Cue_ByMinute_PAExFe_BoxWhisker.png", units="in", width=8, height=6, res=600) 
+
+Male.cue.minute.plot <- ggplot(Male.cue.minute, aes(x = Phase, y = Value)) +
+  geom_boxplot(aes(fill = Exposure)) +
+  ggtitle("Male Fear Conditioning- Cue") +
+  ylab(expression("% Time Freezing")) + 
+  xlab(expression("Minute of Test")) +
+  scale_y_continuous(expand = c(0,0), limits = c(0,105))+
+  scale_x_discrete(labels = c("1","2", "3", "4", "5")) +
+  scale_fill_discrete(name = "Exposure Group") +
+  theme(plot.title = element_text(hjust = 0.5, size=18), 
+        axis.title.y = element_text(size = 16),
+        axis.title.x = element_text(size = 14),
+        #axis.text.x=element_blank(),
+        panel.grid.major = element_blank(), #gets rid of major gridlines
+        panel.grid.minor = element_blank(), #gets rid of minor gridlines
+        panel.background = element_blank(), #turns background white instead of gray
+        axis.line = element_line(colour = "black"), 
+        axis.text=element_text(size=16, color = "black"), #sets size of x and y axis labels
+        axis.title=element_text(size=20,face="bold"))
+
+print(Male.cue.minute.plot)
+dev.off()
+```
+```{r Male Cue By Minute Box Whisker, echo = FALSE}
+print(Male.cue.minute.plot)
+```
+
+## Making a data table to graph results from the male cue test- by section
+```{r}
+#Cue baseline Table
+M.Cue.baseline <- Males %>% select(Exposure, Cue.Baseline)
+M.Cue.baseline$Phase <- strrep("1-Baseline", 1)
+names(M.Cue.baseline)[2] <- "Value"
+
+#Cue cue Table
+M.Cue.cue <- Males %>% select(Exposure, Cue.Total)
+M.Cue.cue$Phase <- strrep("2-Cue", 1)
+names(M.Cue.cue)[2] <- "Value"
+
+#Combine Tables
+Male.cue.section <- rbind(M.Cue.baseline, M.Cue.cue)
+Male.cue.section <- Male.cue.section %>%
+  mutate(Exposure =  factor(Exposure, levels = neworder)) %>%
+  arrange(Exposure)
+```
+
+## Making a graph of the male cue by section results
+```{r}
+png("FC_Male_Cue_BySection_PAExFe_BoxWhisker.png", units="in", width=8, height=6, res=600) 
+
+Male.cue.section.plot <- ggplot(Male.cue.section, aes(x = Phase, y = Value)) +
+  geom_boxplot(aes(fill = Exposure)) +
+  ggtitle("Male Fear Conditioning- Cue") +
+  ylab(expression("% Time Freezing")) + 
+  xlab(expression("Portion of Test")) +
+  scale_y_continuous(expand = c(0,0), limits = c(0,105))+
+  scale_x_discrete(labels = c("Baseline","Cue")) +
+  scale_fill_discrete(name = "Exposure Group") +
+  theme(plot.title = element_text(hjust = 0.5, size=18), 
+        axis.title.y = element_text(size = 16),
+        axis.title.x = element_text(size = 14),
+        #axis.text.x=element_blank(),
+        panel.grid.major = element_blank(), #gets rid of major gridlines
+        panel.grid.minor = element_blank(), #gets rid of minor gridlines
+        panel.background = element_blank(), #turns background white instead of gray
+        axis.line = element_line(colour = "black"), 
+        axis.text=element_text(size=16, color = "black"), #sets size of x and y axis labels
+        axis.title=element_text(size=20,face="bold"))
+
+print(Male.cue.section.plot)
+dev.off()
+```
+```{r Male Cue By Section Box Whisker, echo = FALSE}
+print(Male.cue.section.plot)
+```
+
+## Making a data table to graph results from the female cue test- by minute
+```{r}
+#Cue minute 1 Table
+F.Cue.1 <- Females %>% select(Exposure, Cue.1min)
+F.Cue.1$Phase <- strrep("1-Minute1", 1)
+names(F.Cue.1)[2] <- "Value"
+
+#Cue minute 2 Table
+F.Cue.2 <- Females %>% select(Exposure, Cue.2min)
+F.Cue.2$Phase <- strrep("2-Minute2", 1)
+names(F.Cue.2)[2] <- "Value"
+
+#Cue minute 3 Table
+F.Cue.3 <- Females %>% select(Exposure, Cue.3min)
+F.Cue.3$Phase <- strrep("3-Minute3", 1)
+names(F.Cue.3)[2] <- "Value"
+
+#Cue minute 4 Table
+F.Cue.4 <- Females %>% select(Exposure, Cue.4min)
+F.Cue.4$Phase <- strrep("4-Minute4", 1)
+names(F.Cue.4)[2] <- "Value"
+
+#Cue minute 5 Table
+F.Cue.5 <- Females %>% select(Exposure, Cue.5min)
+F.Cue.5$Phase <- strrep("5-Minute5", 1)
+names(F.Cue.5)[2] <- "Value"
+
+#Combine Tables
+Female.cue.minute <- rbind(F.Cue.1, F.Cue.2, F.Cue.3, F.Cue.4, F.Cue.5)
+Female.cue.minute <- Female.cue.minute %>%
+  mutate(Exposure =  factor(Exposure, levels = neworder)) %>%
+  arrange(Exposure)
+```
+
+## Making a graph of the female cue by minute results
+```{r}
+png("FC_Female_Cue_ByMinute_PAExFe_BoxWhisker.png", units="in", width=8, height=6, res=600) 
+
+Female.cue.minute.plot <- ggplot(Female.cue.minute, aes(x = Phase, y = Value)) +
+  geom_boxplot(aes(fill = Exposure)) +
+  ggtitle("Female Fear Conditioning- Cue") +
+  ylab(expression("% Time Freezing")) + 
+  xlab(expression("Minute of Test")) +
+  scale_y_continuous(expand = c(0,0), limits = c(0,105))+
+  scale_x_discrete(labels = c("1","2", "3", "4", "5")) +
+  scale_fill_discrete(name = "Exposure Group") +
+  theme(plot.title = element_text(hjust = 0.5, size=18), 
+        axis.title.y = element_text(size = 16),
+        axis.title.x = element_text(size = 14),
+        #axis.text.x=element_blank(),
+        panel.grid.major = element_blank(), #gets rid of major gridlines
+        panel.grid.minor = element_blank(), #gets rid of minor gridlines
+        panel.background = element_blank(), #turns background white instead of gray
+        axis.line = element_line(colour = "black"), 
+        axis.text=element_text(size=16, color = "black"), #sets size of x and y axis labels
+        axis.title=element_text(size=20,face="bold"))
+
+print(Female.cue.minute.plot)
+dev.off()
+```
+```{r Female Cue By Minute Box Whisker, echo = FALSE}
+print(Female.cue.minute.plot)
+```
+
+## Making a data table to graph results from the female cue test- by section
+```{r}
+#Cue baseline Table
+F.Cue.baseline <- Females %>% select(Exposure, Cue.Baseline)
+F.Cue.baseline$Phase <- strrep("1-Baseline", 1)
+names(F.Cue.baseline)[2] <- "Value"
+
+#Cue cue Table
+F.Cue.cue <- Females %>% select(Exposure, Cue.Total)
+F.Cue.cue$Phase <- strrep("2-Cue", 1)
+names(F.Cue.cue)[2] <- "Value"
+
+#Combine Tables
+Female.cue.section <- rbind(F.Cue.baseline, F.Cue.cue)
+Female.cue.section <- Female.cue.section %>%
+  mutate(Exposure =  factor(Exposure, levels = neworder)) %>%
+  arrange(Exposure)
+```
+
+## Making a graph of the female cue by section results
+```{r}
+png("FC_Female_Cue_BySection_PAExFe_BoxWhisker.png", units="in", width=8, height=6, res=600) 
+
+Female.cue.section.plot <- ggplot(Female.cue.section, aes(x = Phase, y = Value)) +
+  geom_boxplot(aes(fill = Exposure)) +
+  ggtitle("Female Fear Conditioning- Cue") +
+  ylab(expression("% Time Freezing")) + 
+  xlab(expression("Portion of Test")) +
+  scale_y_continuous(expand = c(0,0), limits = c(0,105))+
+  scale_x_discrete(labels = c("Baseline","Cue")) +
+  scale_fill_discrete(name = "Exposure Group") +
+  theme(plot.title = element_text(hjust = 0.5, size=18), 
+        axis.title.y = element_text(size = 16),
+        axis.title.x = element_text(size = 14),
+        #axis.text.x=element_blank(),
+        panel.grid.major = element_blank(), #gets rid of major gridlines
+        panel.grid.minor = element_blank(), #gets rid of minor gridlines
+        panel.background = element_blank(), #turns background white instead of gray
+        axis.line = element_line(colour = "black"), 
+        axis.text=element_text(size=16, color = "black"), #sets size of x and y axis labels
+        axis.title=element_text(size=20,face="bold"))
+
+print(Female.cue.section.plot)
+dev.off()
+```
+```{r Female Cue By Section Box Whisker, echo = FALSE}
+print(Female.cue.section.plot)
+```
+
+# Cue Bar Graphs
+
+## Male Cue Bar Graphs
+## Normalize the number of points in each group to graph the bar graph overlaid with points
+```{r}
+neworder <- c("CON", "PAE", "CON+Iron", "PAE+Iron")
+Males <- Males %>%
+  mutate(Exposure =  factor(Exposure, levels = neworder)) %>%
+  arrange(Exposure)
+Groupcount <- Males %>% count(Exposure) 
+NumPoints <- max(Groupcount$n) 
+DiffFunc <- function(x) NumPoints - x
+DiffPoints <- as.data.frame(tapply(Groupcount$n, as.character(Groupcount$Exposure), DiffFunc)) 
+DiffPoints$Exposure.Group <- ActualGroupOrder 
+colnames(DiffPoints)[1] <- "NumberN"
+Nrow <- sum(DiffPoints$NumberN) 
+MD <- DiffPoints[1,1] 
+MDFe <- DiffPoints[2,1]
+PAE <- DiffPoints[3,1]
+PAEFe <- DiffPoints[4,1]
+
+DF_extra <- data.frame(matrix(NA, nrow = Nrow, ncol = 50)) 
+vector <- rep(c("CON", "PAE", "CON+Iron", "PAE+Iron"), times = c(MD, PAE, MDFe, PAEFe)) 
+DF_extra$Exposure.Group <- vector
+DF_extra <- DF_extra[,c(1:4, 51, 5:50)]
+DF_extra <- setNames(DF_extra, names(Males))
+DF_extra$Sex <- c("M")
+Males <- rbind(Males, DF_extra)
+print(Males %>% count(Exposure))
+Males <- Males[order(Males$Exposure), ]
+
+MSex_NumPoints <- NumPoints
+```
+
+## Making a data table to graph results from the male Cue test- total freezing
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+#Mean
+Mean <- tapply(Males$Cue.Total, as.character(Males$Exposure), mean, na.rm=TRUE) #make sure to change 
+Mean <- as.data.frame(rep(Mean, each = MSex_NumPoints))
+Mean$Exposure <- rep(ActualGroupOrder, each = MSex_NumPoints) 
+colnames(Mean)[1] <- "Mean"
+
+#Stdev
+Stdev <- tapply(Males$Cue.Total, as.character(Males$Exposure), sd, na.rm=TRUE) #make sure to change 
+Stdev <- as.data.frame(rep(Stdev, each = MSex_NumPoints))
+Stdev$Exposure <- rep(ActualGroupOrder, each = MSex_NumPoints)
+colnames(Stdev)[1] <- "Stdev"
+
+#Combine
+dataframe_combine <- cbind(Mean, Stdev, Males$Cue.Total) #make sure to change
+colnames(dataframe_combine)[5] <- "Value"
+dataframe_combine <- dataframe_combine[-2]
+
+#Error bars
+dataframe_combine$Upper <- dataframe_combine$Mean + dataframe_combine$Stdev
+dataframe_combine$Lower <- dataframe_combine$Mean - dataframe_combine$Stdev
+
+dataframe_combine <- dataframe_combine %>%
+  mutate(Exposure =  factor(Exposure, levels = neworder)) %>%
+  arrange(Exposure)
+
+#Make Graph#
+png("Males_FC_TotalCue_PAExFe_Bar&Dotplot_B&W.png", units="in", width=7, height=7, res=600) 
+
+sets <- c("CON", "PAE", "CON+Iron", "PAE+Iron")
+
+p<- ggplot(dataframe_combine, aes(x=Exposure, y=Mean)) + 
+  geom_bar(stat="identity", color="black", aes(fill = Exposure),
+           position=position_dodge()) +
+  scale_fill_manual(values=c("CON" = "grey100",
+                             "PAE" = "grey51",
+                             "CON+Iron" = "grey75",
+                             "PAE+Iron" = "grey30"
+                             )) +
+  geom_errorbar(aes(ymin=Lower, ymax=Upper), width=.2,
+                position=position_dodge(.9)) + 
+  geom_point(aes(x=Exposure, y=Value),
+             size = 1.25, shape = 19, position = position_jitter(width=.15, height=0)) +
+  scale_y_continuous(expand = c(0,0), limits = c(0,100)) +
+  ggtitle("Male FC- Total Freezing During Cue") +
+  ylab(expression("% Time Freezing")) + 
+  theme(plot.title = element_text(hjust = 0.5, size=18, family = "Times New Roman"), 
+        axis.title.x = element_blank(), #gets rid of x-axis label
+        axis.title.y = element_text(size = 24, family = "Times New Roman"),
+        panel.grid.major = element_blank(), #gets rid of major gridlines
+        panel.grid.minor = element_blank(), #gets rid of minor gridlines
+        panel.background = element_blank(), #turns background white instead of gray
+        axis.line = element_line(colour = "black"), 
+        legend.position="none", #gets rid of legend
+        axis.text=element_text(size=20, color = "black", family = "Times New Roman"), #sets size of x and y axis labels
+        axis.text.x=element_text(angle = 0, vjust = .95, hjust = 0.5, family = "Times New Roman"),
+        axis.title=element_text(size=20,face="bold", family = "Times New Roman")) + 
+  scale_x_discrete (limits = sets)
+print(p)
+dev.off() 
+```
+```{r Male FC Cue Bargraph, echo = FALSE, warning = FALSE, message = FALSE}
+print(p)
+```
+
+## Female Cue Bar Graphs
+## Normalize the number of points in each group to graph the bar graph overlaid with points
+```{r}
+neworder <- c("CON", "PAE", "CON+Iron", "PAE+Iron")
+Females <- Females %>%
+  mutate(Exposure =  factor(Exposure, levels = neworder)) %>%
+  arrange(Exposure)
+Groupcount <- Females %>% count(Exposure) 
+NumPoints <- max(Groupcount$n) 
+DiffFunc <- function(x) NumPoints - x
+DiffPoints <- as.data.frame(tapply(Groupcount$n, as.character(Groupcount$Exposure), DiffFunc)) 
+DiffPoints$Exposure.Group <- ActualGroupOrder 
+colnames(DiffPoints)[1] <- "NumberN"
+Nrow <- sum(DiffPoints$NumberN) 
+MD <- DiffPoints[1,1] 
+MDFe <- DiffPoints[2,1]
+PAE <- DiffPoints[3,1]
+PAEFe <- DiffPoints[4,1]
+
+DF_extra <- data.frame(matrix(NA, nrow = Nrow, ncol = 50)) 
+vector <- rep(c("CON", "PAE", "CON+Iron", "PAE+Iron"), times = c(MD, PAE, MDFe, PAEFe)) 
+DF_extra$Exposure.Group <- vector
+DF_extra <- DF_extra[,c(1:4, 51, 5:50)]
+DF_extra <- setNames(DF_extra, names(Females))
+DF_extra$Sex <- c("M")
+Females <- rbind(Females, DF_extra)
+print(Females %>% count(Exposure))
+Females <- Females[order(Females$Exposure), ]
+
+FSex_NumPoints <- NumPoints
+```
+
+## Making a data table to graph results from the Female Cue test- total freezing
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+#Mean
+Mean <- tapply(Females$Cue.Total, as.character(Females$Exposure), mean, na.rm=TRUE) #make sure to change 
+Mean <- as.data.frame(rep(Mean, each = FSex_NumPoints))
+Mean$Exposure <- rep(ActualGroupOrder, each = FSex_NumPoints) 
+colnames(Mean)[1] <- "Mean"
+
+#Stdev
+Stdev <- tapply(Females$Cue.Total, as.character(Females$Exposure), sd, na.rm=TRUE) #make sure to change 
+Stdev <- as.data.frame(rep(Stdev, each = FSex_NumPoints))
+Stdev$Exposure <- rep(ActualGroupOrder, each = FSex_NumPoints)
+colnames(Stdev)[1] <- "Stdev"
+
+#Combine
+dataframe_combine <- cbind(Mean, Stdev, Females$Cue.Total) #make sure to change
+colnames(dataframe_combine)[5] <- "Value"
+dataframe_combine <- dataframe_combine[-2]
+
+#Error bars
+dataframe_combine$Upper <- dataframe_combine$Mean + dataframe_combine$Stdev
+dataframe_combine$Lower <- dataframe_combine$Mean - dataframe_combine$Stdev
+
+dataframe_combine <- dataframe_combine %>%
+  mutate(Exposure =  factor(Exposure, levels = neworder)) %>%
+  arrange(Exposure)
+
+#Make Graph#
+png("Females_FC_TotalCue_PAExFe_Bar&Dotplot_B&W.png", units="in", width=7, height=7, res=600) 
+
+sets <- c("CON", "PAE", "CON+Iron", "PAE+Iron")
+
+p<- ggplot(dataframe_combine, aes(x=Exposure, y=Mean)) + 
+  geom_bar(stat="identity", color="black", aes(fill = Exposure),
+           position=position_dodge()) +
+  scale_fill_manual(values=c("CON" = "grey100",
+                             "PAE" = "grey51",
+                             "CON+Iron" = "grey75",
+                             "PAE+Iron" = "grey30"
+                             )) +
+  geom_errorbar(aes(ymin=Lower, ymax=Upper), width=.2,
+                position=position_dodge(.9)) + 
+  geom_point(aes(x=Exposure, y=Value),
+             size = 1.25, shape = 19, position = position_jitter(width=.15, height=0)) +
+  scale_y_continuous(expand = c(0,0), limits = c(0,100)) +
+  ggtitle("Female FC- Total Freezing During Cue") +
+  ylab(expression("% Time Freezing")) + 
+  theme(plot.title = element_text(hjust = 0.5, size=18, family = "Times New Roman"), 
+        axis.title.x = element_blank(), #gets rid of x-axis label
+        axis.title.y = element_text(size = 24, family = "Times New Roman"),
+        panel.grid.major = element_blank(), #gets rid of major gridlines
+        panel.grid.minor = element_blank(), #gets rid of minor gridlines
+        panel.background = element_blank(), #turns background white instead of gray
+        axis.line = element_line(colour = "black"), 
+        legend.position="none", #gets rid of legend
+        axis.text=element_text(size=20, color = "black",family = "Times New Roman"), #sets size of x and y axis labels
+        axis.text.x=element_text(angle = 0, vjust = .95, hjust = 0.5, family = "Times New Roman"),
+        axis.title=element_text(size=20,face="bold", family = "Times New Roman")) + 
+  scale_x_discrete (limits = sets)
+print(p)
+dev.off() 
+```
+```{r Female FC Cue Bargraph, echo = FALSE, warning = FALSE, message = FALSE}
+print(p)
+```
+
+# Remake Cue Graphs to be Bar Graphs
+## Males Cue Bar Graphs
+```{r}
+#Create new column to distinguish the groups
+Male.cue.minute$Group <- paste(Male.cue.minute$Exposure, Male.cue.minute$Phase, sep="_")
+#Calcuate the mean for each group- exposure and test stage
+MC.table <-aggregate(Male.cue.minute[, 2], list(Male.cue.minute$Group), mean, na.rm = TRUE)
+MC.vector <- as.vector(MC.table$Group.1)
+```
+
+### Males Cue- Equalize Row Number by Exposure
+```{r}
+Groupcount <- Male.cue.minute %>% count(Group) 
+NumPoints <- max(Groupcount$n)
+DiffFunc <- function(x) NumPoints - x 
+DiffPoints <- as.data.frame(tapply(Groupcount$n, as.character(Groupcount$Group), DiffFunc)) 
+DiffPoints$Group <- MC.vector
+colnames(DiffPoints)[1] <- "NumberN"
+Nrow <- sum(DiffPoints$NumberN)
+MD <- DiffPoints[1,1]
+MDIron <- DiffPoints[6,1]
+PAE <- DiffPoints[11,1]
+PAEIron <- DiffPoints[16,1]
+DF_extra <- data.frame(matrix(NA, nrow = Nrow, ncol = 3))
+vector <- rep(c("MD_1-Minute1", "MD_2-Minute2", "MD_3-Minute3", "MD_4-Minute4", "MD_5-Minute5", "MD+Iron_1-Minute1", "MD+Iron_2-Minute2", "MD+Iron_3-Minute3", "MD+Iron_4-Minute4", "MD+Iron_5-Minute5", "PAE_1-Minute1", "PAE_2-Minute2", "PAE_3-Minute3", "PAE_4-Minute4", "PAE_5-Minute5", "PAE+Iron_1-Minute1", "PAE+Iron_2-Minute2", "PAE+Iron_3-Minute3", "PAE+Iron_4-Minute4", "PAE+Iron_5-Minute5"), times = c(MD, MD, MD, MD, MD, MDIron, MDIron, MDIron, MDIron, MDIron, PAE, PAE, PAE, PAE, PAE, PAEIron, PAEIron, PAEIron, PAEIron, PAEIron))
+DF_extra$Group <- vector
+DF_extra <- setNames(DF_extra, names(Male.cue.minute))
+MC_new <- rbind(Male.cue.minute, DF_extra)
+print(MC_new %>% count(Group))
+MC_new <- MC_new[order(MC_new$Group), ]
+Male_NumPoints <- NumPoints
+```
+#### Number of Missing Points to Expect in Male Graphs
+```{r echo = FALSE}
+print(Nrow)
+```
+
+## Males Bar Graph of Cue
+This graph does not contain individual dots, since they did not work with the more complicated graph. If the individual points are required, then the plots for Minute 1, Minute 2, Total Freezing, etc. will have to be made separately.
+```{r warning = FALSE, message = FALSE}
+Mean <- tapply(MC_new$Value, as.character(MC_new$Group), mean, na.rm=TRUE) #change column
+Mean <- as.data.frame(rep(Mean, each = Male_NumPoints))
+Mean$Group <- rep(MC.vector, each = Male_NumPoints)
+colnames(Mean)[1] <- "Mean"
+
+Stdev <- tapply(MC_new$Value, as.character(MC_new$Group), sd, na.rm=TRUE) #change column
+Stdev <- as.data.frame(rep(Stdev, each = Male_NumPoints))
+Stdev$Group <- rep(MC.vector, each = Male_NumPoints)
+colnames(Stdev)[1] <- "Stdev"
+
+dataframe_combine <- cbind(Mean, Stdev, MC_new$Value, MC_new$Exposure, MC_new$Phase) #change column
+colnames(dataframe_combine)[5] <- "Value"
+colnames(dataframe_combine)[6] <- "Exposure"
+colnames(dataframe_combine)[7] <- "Phase"
+dataframe_combine <- dataframe_combine[-2]
+
+dataframe_combine$Upper <- dataframe_combine$Mean + dataframe_combine$Stdev
+dataframe_combine$Lower <- dataframe_combine$Mean - dataframe_combine$Stdev
+
+#Make Graph#
+png("FC_Male_Cue_AllData_PAExFe_Bargraph.png", units="in", width=12, height=7, res=600) 
+
+XLabels <- c("Minute 1", "Minute 2", "Minute 3", "Minute 4", "Minute 5")
+
+p <- ggplot(data=subset(dataframe_combine, !is.na(Value)), aes(fill=Exposure, y=Mean, x=Phase, na.rm = TRUE)) + 
+    geom_bar(position="dodge", stat="identity", color="black") +
+  scale_fill_manual(values=c("MD" = "grey100",
+                             "PAE" = "grey51",
+                             "MD+Iron" = "grey75",
+                             "PAE+Iron" = "grey30"
+                             )) +
+  geom_errorbar(aes(ymin=Mean, ymax=Upper), width=.2,
+                position=position_dodge(.9)) +
+  scale_y_continuous(expand = c(0,0), limits = c(0,110)) +
+  ggtitle("Males FC- Cue") +
+  ylab(expression("% Time Freezing")) + 
+   theme(plot.title = element_text(hjust = 0.5, size=18), 
+        axis.title.x = element_blank(), #gets rid of x-axis label
+        axis.title.y = element_text(size = 16),
+        panel.grid.major = element_blank(), #gets rid of major gridlines
+        panel.grid.minor = element_blank(), #gets rid of minor gridlines
+        panel.background = element_blank(), #turns background white instead of gray
+        axis.line = element_line(colour = "black"), 
+        #legend.position="none", #gets rid of legend
+        axis.text=element_text(size=18, color = "black"), #sets size of x and y axis labels
+        axis.text.x=element_text(angle = 0, vjust = .95, hjust = 0.5),
+        axis.title=element_text(size=20,face="bold")) +
+  scale_x_discrete(labels= XLabels)
+print(p)
+dev.off() 
+```
+```{r Male Cue Barplot, echo = FALSE}
+print(p)
+```
+
+## Females Cue Bar Graphs
+```{r}
+#Create new column to distinguish the groups
+Female.cue.minute$Group <- paste(Female.cue.minute$Exposure, Female.cue.minute$Phase, sep="_")
+#Calcuate the mean for each group- exposure and test stage
+MC.table <-aggregate(Female.cue.minute[, 2], list(Female.cue.minute$Group), mean, na.rm = TRUE)
+MC.vector <- as.vector(MC.table$Group.1)
+```
+
+### Females Cue- Equalize Row Number by Exposure
+```{r}
+Groupcount <- Female.cue.minute %>% count(Group) 
+NumPoints <- max(Groupcount$n)
+DiffFunc <- function(x) NumPoints - x 
+DiffPoints <- as.data.frame(tapply(Groupcount$n, as.character(Groupcount$Group), DiffFunc)) 
+DiffPoints$Group <- MC.vector
+colnames(DiffPoints)[1] <- "NumberN"
+Nrow <- sum(DiffPoints$NumberN)
+MD <- DiffPoints[1,1]
+MDIron <- DiffPoints[6,1]
+PAE <- DiffPoints[11,1]
+PAEIron <- DiffPoints[16,1]
+DF_extra <- data.frame(matrix(NA, nrow = Nrow, ncol = 3))
+vector <- rep(c("MD_1-Minute1", "MD_2-Minute2", "MD_3-Minute3", "MD_4-Minute4", "MD_5-Minute5", "MD+Iron_1-Minute1", "MD+Iron_2-Minute2", "MD+Iron_3-Minute3", "MD+Iron_4-Minute4", "MD+Iron_5-Minute5", "PAE_1-Minute1", "PAE_2-Minute2", "PAE_3-Minute3", "PAE_4-Minute4", "PAE_5-Minute5", "PAE+Iron_1-Minute1", "PAE+Iron_2-Minute2", "PAE+Iron_3-Minute3", "PAE+Iron_4-Minute4", "PAE+Iron_5-Minute5"), times = c(MD, MD, MD, MD, MD, MDIron, MDIron, MDIron, MDIron, MDIron, PAE, PAE, PAE, PAE, PAE, PAEIron, PAEIron, PAEIron, PAEIron, PAEIron))
+DF_extra$Group <- vector
+DF_extra <- setNames(DF_extra, names(Female.cue.minute))
+MC_new <- rbind(Female.cue.minute, DF_extra)
+print(MC_new %>% count(Group))
+MC_new <- MC_new[order(MC_new$Group), ]
+Female_NumPoints <- NumPoints
+```
+#### Number of Missing Points to Expect in Female Graphs
+```{r echo = FALSE}
+print(Nrow)
+```
+
+## Females Bar Graph of Cue
+This graph does not contain individual dots, since they did not work with the more complicated graph. If the individual points are required, then the plots for Minute 1, Minute 2, Total Freezing, etc. will have to be made separately.
+```{r warning = FALSE, message = FALSE}
+Mean <- tapply(MC_new$Value, as.character(MC_new$Group), mean, na.rm=TRUE) #change column
+Mean <- as.data.frame(rep(Mean, each = Female_NumPoints))
+Mean$Group <- rep(MC.vector, each = Female_NumPoints)
+colnames(Mean)[1] <- "Mean"
+
+Stdev <- tapply(MC_new$Value, as.character(MC_new$Group), sd, na.rm=TRUE) #change column
+Stdev <- as.data.frame(rep(Stdev, each = Female_NumPoints))
+Stdev$Group <- rep(MC.vector, each = Female_NumPoints)
+colnames(Stdev)[1] <- "Stdev"
+
+dataframe_combine <- cbind(Mean, Stdev, MC_new$Value, MC_new$Exposure, MC_new$Phase) #change column
+colnames(dataframe_combine)[5] <- "Value"
+colnames(dataframe_combine)[6] <- "Exposure"
+colnames(dataframe_combine)[7] <- "Phase"
+dataframe_combine <- dataframe_combine[-2]
+
+dataframe_combine$Upper <- dataframe_combine$Mean + dataframe_combine$Stdev
+dataframe_combine$Lower <- dataframe_combine$Mean - dataframe_combine$Stdev
+
+#Make Graph#
+png("FC_Female_Cue_AllData_PAExFe_Bargraph.png", units="in", width=12, height=7, res=600) 
+
+XLabels <- c("Minute 1", "Minute 2", "Minute 3", "Minute 4", "Minute 5")
+
+p <- ggplot(data=subset(dataframe_combine, !is.na(Value)), aes(fill=Exposure, y=Mean, x=Phase, na.rm = TRUE)) + 
+    geom_bar(position="dodge", stat="identity", color="black") +
+  scale_fill_manual(values=c("MD" = "grey100",
+                             "PAE" = "grey51",
+                             "MD+Iron" = "grey75",
+                             "PAE+Iron" = "grey30"
+                             )) +
+  geom_errorbar(aes(ymin=Mean, ymax=Upper), width=.2,
+                position=position_dodge(.9)) +
+  scale_y_continuous(expand = c(0,0), limits = c(0,110)) +
+  ggtitle("Females FC- Cue") +
+  ylab(expression("% Time Freezing")) + 
+   theme(plot.title = element_text(hjust = 0.5, size=18), 
+        axis.title.x = element_blank(), #gets rid of x-axis label
+        axis.title.y = element_text(size = 16),
+        panel.grid.major = element_blank(), #gets rid of major gridlines
+        panel.grid.minor = element_blank(), #gets rid of minor gridlines
+        panel.background = element_blank(), #turns background white instead of gray
+        axis.line = element_line(colour = "black"), 
+        #legend.position="none", #gets rid of legend
+        axis.text=element_text(size=18, color = "black"), #sets size of x and y axis labels
+        axis.text.x=element_text(angle = 0, vjust = .95, hjust = 0.5),
+        axis.title=element_text(size=20,face="bold")) +
+  scale_x_discrete(labels= XLabels)
+print(p)
+dev.off() 
+```
+```{r Female Cue Barplot, echo = FALSE}
+print(p)
+```
+
+# Create line graphs for the Cue sessions
+
+## Males
+```{r}
+#Minute 1
+Males.1 <- tapply(Males$Cue.1min, as.character(Males$Exposure), mean, na.rm=TRUE)
+Males.1 <- as.data.frame(Males.1)
+Males.1$Exposure <- ActualGroupOrder
+colnames(Males.1)[1] <- "Mean" #fix column name
+Males.sterr.1 <- tapply(Males$Cue.1min, as.character(Males$Exposure), std.error, na.rm=TRUE)
+Males.1$Sterr <- Males.sterr.1
+Males.1$Minute <- rep("1", 4)
+
+#Minute 2
+Males.2 <- tapply(Males$Cue.2min, as.character(Males$Exposure), mean, na.rm=TRUE)
+Males.2 <- as.data.frame(Males.2)
+Males.2$Exposure <- ActualGroupOrder
+colnames(Males.2)[1] <- "Mean" #fix column name
+Males.sterr.2 <- tapply(Males$Cue.2min, as.character(Males$Exposure), std.error, na.rm=TRUE)
+Males.2$Sterr <- Males.sterr.2
+Males.2$Minute <- rep("2", 4)
+
+#Minute 3
+Males.3 <- tapply(Males$Cue.3min, as.character(Males$Exposure), mean, na.rm=TRUE)
+Males.3 <- as.data.frame(Males.3)
+Males.3$Exposure <- ActualGroupOrder
+colnames(Males.3)[1] <- "Mean" #fix column name
+Males.sterr.3 <- tapply(Males$Cue.3min, as.character(Males$Exposure), std.error, na.rm=TRUE)
+Males.3$Sterr <- Males.sterr.3
+Males.3$Minute <- rep("3", 4)
+
+#Minute 4
+Males.4 <- tapply(Males$Cue.4min, as.character(Males$Exposure), mean, na.rm=TRUE)
+Males.4 <- as.data.frame(Males.4)
+Males.4$Exposure <- ActualGroupOrder
+colnames(Males.4)[1] <- "Mean" #fix column name
+Males.sterr.4 <- tapply(Males$Cue.4min, as.character(Males$Exposure), std.error, na.rm=TRUE)
+Males.4$Sterr <- Males.sterr.4
+Males.4$Minute <- rep("4", 4)
+
+#Minute 5
+Males.5 <- tapply(Males$Cue.5min, as.character(Males$Exposure), mean, na.rm=TRUE)
+Males.5 <- as.data.frame(Males.5)
+Males.5$Exposure <- ActualGroupOrder
+colnames(Males.5)[1] <- "Mean" #fix column name
+Males.sterr.5 <- tapply(Males$Cue.5min, as.character(Males$Exposure), std.error, na.rm=TRUE)
+Males.5$Sterr <- Males.sterr.5
+Males.5$Minute <- rep("5", 4)
+
+#Merge all tables
+Males_combined <- rbind(Males.1, Males.2, Males.3, Males.4, Males.5)
+Males_combined <- Males_combined[ ,c(2,1,3,4)]
+names(Males_combined)[1] <- "Exposure"
+
+#Create error bar data
+Males_combined$Upper <- Males_combined$Mean + Males_combined$Sterr
+Males_combined$Lower <- Males_combined$Mean - Males_combined$Sterr
+
+Males_combined <- Males_combined %>%
+  mutate(Exposure =  factor(Exposure, levels = neworder)) %>%
+  arrange(Exposure)
+```
+
+## Graph Male Cue Results as a Linegraph
+```{r}
+png("FC_Males_Cue_PAExFe_Linegraph.png", units="in", width=8, height=6, res=600) 
+
+XLabels2 <- c("1", "2", "3", "4", "5")
+
+males.graph <- ggplot(data=Males_combined, aes(x=Minute, y=Mean, group=Exposure, color=Exposure)) +
+  geom_point() +
+  geom_line() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,105))+ 
+  scale_color_hue(labels = c("MD", "PAE", "MD+Iron", "PAE+Iron")) +
+  geom_errorbar(aes(ymin=Lower, ymax=Upper), width=.2) +
+  ggtitle("Male FC Cue") +
+  ylab(expression("% Time Freezing")) + 
+  xlab(expression("Minute of Experiment")) +
+  theme(plot.title = element_text(hjust = 0.5, size=18), 
+        axis.title.y = element_text(size = 16),
+        axis.title.x = element_text(size = 14),
+        panel.grid.major = element_blank(), #gets rid of major gridlines
+        panel.grid.minor = element_blank(), #gets rid of minor gridlines
+        panel.background = element_blank(), #turns background white instead of gray
+        axis.line = element_line(colour = "black"), 
+        axis.text=element_text(size=18, color = "black"), #sets size of x and y axis labels
+        axis.text.x=element_text(vjust = .95, hjust = 0.5),
+        axis.title=element_text(size=20,face="bold")) +
+    scale_x_discrete(labels= XLabels2)
+
+print(males.graph)
+dev.off() 
+```
+```{r Male FC Cue Line Graph, echo = FALSE}
+print(males.graph)
+```
+
+## Females
+```{r}
+#Minute 1
+Females.1 <- tapply(Females$Cue.1min, as.character(Females$Exposure), mean, na.rm=TRUE)
+Females.1 <- as.data.frame(Females.1)
+Females.1$Exposure <- ActualGroupOrder
+colnames(Females.1)[1] <- "Mean" #fix column name
+Females.sterr.1 <- tapply(Females$Cue.1min, as.character(Females$Exposure), std.error, na.rm=TRUE)
+Females.1$Sterr <- Females.sterr.1
+Females.1$Minute <- rep("1", 4)
+
+#Minute 2
+Females.2 <- tapply(Females$Cue.2min, as.character(Females$Exposure), mean, na.rm=TRUE)
+Females.2 <- as.data.frame(Females.2)
+Females.2$Exposure <- ActualGroupOrder
+colnames(Females.2)[1] <- "Mean" #fix column name
+Females.sterr.2 <- tapply(Females$Cue.2min, as.character(Females$Exposure), std.error, na.rm=TRUE)
+Females.2$Sterr <- Females.sterr.2
+Females.2$Minute <- rep("2", 4)
+
+#Minute 3
+Females.3 <- tapply(Females$Cue.3min, as.character(Females$Exposure), mean, na.rm=TRUE)
+Females.3 <- as.data.frame(Females.3)
+Females.3$Exposure <- ActualGroupOrder
+colnames(Females.3)[1] <- "Mean" #fix column name
+Females.sterr.3 <- tapply(Females$Cue.3min, as.character(Females$Exposure), std.error, na.rm=TRUE)
+Females.3$Sterr <- Females.sterr.3
+Females.3$Minute <- rep("3", 4)
+
+#Minute 4
+Females.4 <- tapply(Females$Cue.4min, as.character(Females$Exposure), mean, na.rm=TRUE)
+Females.4 <- as.data.frame(Females.4)
+Females.4$Exposure <- ActualGroupOrder
+colnames(Females.4)[1] <- "Mean" #fix column name
+Females.sterr.4 <- tapply(Females$Cue.4min, as.character(Females$Exposure), std.error, na.rm=TRUE)
+Females.4$Sterr <- Females.sterr.4
+Females.4$Minute <- rep("4", 4)
+
+#Minute 5
+Females.5 <- tapply(Females$Cue.5min, as.character(Females$Exposure), mean, na.rm=TRUE)
+Females.5 <- as.data.frame(Females.5)
+Females.5$Exposure <- ActualGroupOrder
+colnames(Females.5)[1] <- "Mean" #fix column name
+Females.sterr.5 <- tapply(Females$Cue.5min, as.character(Females$Exposure), std.error, na.rm=TRUE)
+Females.5$Sterr <- Females.sterr.5
+Females.5$Minute <- rep("5", 4)
+
+#Merge all tables
+Females_combined <- rbind(Females.1, Females.2, Females.3, Females.4, Females.5)
+Females_combined <- Females_combined[ ,c(2,1,3,4)]
+names(Females_combined)[1] <- "Exposure"
+
+#Create error bar data
+Females_combined$Upper <- Females_combined$Mean + Females_combined$Sterr
+Females_combined$Lower <- Females_combined$Mean - Females_combined$Sterr
+
+Females_combined <- Females_combined %>%
+  mutate(Exposure =  factor(Exposure, levels = neworder)) %>%
+  arrange(Exposure)
+```
+
+## Graph Female Cue Results as a Linegraph
+```{r}
+png("FC_Females_Cue_PAExFe_Linegraph.png", units="in", width=8, height=6, res=600) 
+
+XLabels2 <- c("1", "2", "3", "4", "5")
+
+Females.graph <- ggplot(data=Females_combined, aes(x=Minute, y=Mean, group=Exposure, color=Exposure)) +
+  geom_point() +
+  geom_line() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,105))+ 
+  scale_color_hue(labels = c("MD", "PAE", "MD+Iron", "PAE+Iron")) +
+  geom_errorbar(aes(ymin=Lower, ymax=Upper), width=.2) +
+  ggtitle("Females FC Cue") +
+  ylab(expression("% Time Freezing")) + 
+  xlab(expression("Minute of Experiment")) +
+  theme(plot.title = element_text(hjust = 0.5, size=18), 
+        axis.title.y = element_text(size = 16),
+        axis.title.x = element_text(size = 14),
+        panel.grid.major = element_blank(), #gets rid of major gridlines
+        panel.grid.minor = element_blank(), #gets rid of minor gridlines
+        panel.background = element_blank(), #turns background white instead of gray
+        axis.line = element_line(colour = "black"), 
+        axis.text=element_text(size=18, color = "black"), #sets size of x and y axis labels
+        axis.text.x=element_text(vjust = .95, hjust = 0.5),
+        axis.title=element_text(size=20,face="bold")) +
+    scale_x_discrete(labels= XLabels2)
+
+print(Females.graph)
+dev.off() 
+```
+```{r Female FC Cue Line Graph, echo = FALSE}
+print(Females.graph)
+```
+
+# Session Information
+```{r, echo = FALSE}
+session_info <- devtools::session_info()
+print(session_info)
+```

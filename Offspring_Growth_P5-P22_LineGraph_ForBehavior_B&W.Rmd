@@ -1,0 +1,256 @@
+---
+title: "Offspring Growth P5-P22, Only Including Those For Behavior"
+author: "Kaylee Helfrich"
+date: "5/22/2020 - 10/30/2020"
+output:
+  pdf_document: default
+  html_document: default
+data: "Offspring_Growth_EarlyPostnatal.csv"
+---
+
+Built with R `r getRversion()`
+
+```{r RMarkdown setup, include = FALSE, message = FALSE}
+require(knitr)
+knitr::opts_chunk$set(echo = TRUE, tidy.opts=list(width.cutoff=60), tidy=TRUE)
+knitr::opts_knit$set(root.dir = "~/KayleeStuff/Smith_Lab/Data/Rat_Iron2/Offspring_Growth_Early")
+options(tinytex.verbose = TRUE)
+```
+
+# Introduction
+This graph shows offspring growth from P5-P22 for only the offspring that were later used for behavior (the 3 males and 3 females that had the median weight of the litter) from the rats generated in the rat iron project in 2020. None of the data is grouped by litter, and all siblings are included equally. The four Exposure groups are maltodextrin (MD), prenatal alcohol exposure (PAE), MD+iron, and PAE+iron. These were generated using the standard rat model (PAE or MD at 5g/kg split dose from GD13.5-19.5, and iron dosed at 6mg/kg from GD12.5-19.5). Data are separated into male and female.
+
+```{r include = FALSE}
+rm(list=ls())
+setwd("~/KayleeStuff/Smith_Lab/Data/Rat_Iron2/Offspring_Growth_Early")
+library(ggplot2)
+library(plotrix)
+library(dplyr)
+library(extrafont)
+loadfonts(device = "win")
+```
+
+```{r Import file and rearrange by Exposure to be alphabetical}
+File <- "Offspring_Growth_EarlyPostnatal.csv"
+data <- read.csv(File, header=TRUE) 
+data_frame <- data.frame(data)
+data_frame <- data_frame[order(data_frame$Exposure), ]
+data_frame <- data_frame[ which(data_frame$Behavior=='Yes'), ]
+```
+```{r echo = FALSE}
+print(data_frame)
+```
+```{r}
+ActualGroupOrder <- c("CON", "CON+Iron", "ALC", "ALC+Iron")
+#GraphGroupOrder <- c("MD+water", "PAE+water", "MD+iron", "PAE+iron")
+```
+
+## Create separate males and females tables
+```{r}
+Males <- data_frame[ which(data_frame$Sex=='M'), ]
+Females <- data_frame[ which(data_frame$Sex=='F'), ]
+```
+
+## Create mean and standard deviation tables for males
+```{r}
+#Weight at P5
+Males.means.5 <- tapply(Males$Weight.P5, as.character(Males$Exposure), mean, na.rm=TRUE)
+Males.means.5 <- as.data.frame(Males.means.5)
+Males.means.5$Exposure <- ActualGroupOrder
+colnames(Males.means.5)[1] <- "Mean" #fix column name
+Males.stdev.5 <- tapply(Males$Weight.P5, as.character(Males$Exposure), sd, na.rm=TRUE)
+Males.means.5$Stdev <- Males.stdev.5
+Males.means.5$Age <- rep("05", 4)
+
+#Weight at P10
+Males.means.10 <- tapply(Males$Weight.P10, as.character(Males$Exposure), mean, na.rm=TRUE)
+Males.means.10 <- as.data.frame(Males.means.10)
+Males.means.10$Exposure <- ActualGroupOrder
+colnames(Males.means.10)[1] <- "Mean" #fix column name
+Males.stdev.10 <- tapply(Males$Weight.P10, as.character(Males$Exposure), sd, na.rm=TRUE)
+Males.means.10$Stdev <- Males.stdev.10
+Males.means.10$Age <- rep("10", 4)
+
+#Weight at P15
+Males.means.15 <- tapply(Males$Weight.P15, as.character(Males$Exposure), mean, na.rm=TRUE)
+Males.means.15 <- as.data.frame(Males.means.15)
+Males.means.15$Exposure <- ActualGroupOrder
+colnames(Males.means.15)[1] <- "Mean" #fix column name
+Males.stdev.15 <- tapply(Males$Weight.P15, as.character(Males$Exposure), sd, na.rm=TRUE)
+Males.means.15$Stdev <- Males.stdev.15
+Males.means.15$Age <- rep("15", 4)
+
+#Weight at P20
+Males.means.20 <- tapply(Males$Weight.P20, as.character(Males$Exposure), mean, na.rm=TRUE)
+Males.means.20 <- as.data.frame(Males.means.20)
+Males.means.20$Exposure <- ActualGroupOrder
+colnames(Males.means.20)[1] <- "Mean" #fix column name
+Males.stdev.20 <- tapply(Males$Weight.P20, as.character(Males$Exposure), sd, na.rm=TRUE)
+Males.means.20$Stdev <- Males.stdev.20
+Males.means.20$Age <- rep("20", 4)
+
+#Weight at P22
+Males.means.22 <- tapply(Males$Weight.P22, as.character(Males$Exposure), mean, na.rm=TRUE)
+Males.means.22 <- as.data.frame(Males.means.22)
+Males.means.22$Exposure <- ActualGroupOrder
+colnames(Males.means.22)[1] <- "Mean" #fix column name
+Males.stdev.22 <- tapply(Males$Weight.P22, as.character(Males$Exposure), sd, na.rm=TRUE)
+Males.means.22$Stdev <- Males.stdev.22
+Males.means.22$Age <- rep("22", 4)
+
+#Merge all tables
+Males_combined <- rbind(Males.means.5, Males.means.10, Males.means.15, Males.means.20, Males.means.22)
+Males_combined <- Males_combined[ ,c(2,1,3,4)]
+Males_combined$Age <- as.numeric(as.vector(Males_combined$Age)) #convert "Age" to a numeric variable so the x-axis adjusts accordingly
+names(Males_combined)[1] <- "Exposure.Group"
+Males_combined$Upper <- Males_combined$Mean + Males_combined$Stdev
+Males_combined$Lower <- Males_combined$Mean - Males_combined$Stdev
+
+Males_combined$Exposure.Group <- factor(Males_combined$Exposure.Group, levels=c("CON", "ALC", "CON+Iron", "ALC+Iron"))
+```
+
+## Graph Male Weights
+```{r}
+png("MaleWeight_P5-P22_RatsForBehavior_PAExFe_Linegraph_B&W.png", units="in", width=8, height=6, res=600) 
+
+males <- ggplot(data=Males_combined, aes(x=Age, y=Mean, group=Exposure.Group)) +
+  geom_point(aes(shape=Exposure.Group)) +
+  scale_shape_manual(values=c(15, 17, 18, 19)) +
+  geom_line(aes(linetype=Exposure.Group, color = Exposure.Group)) +
+  scale_linetype_manual(values=c("solid", "longdash", "dotted", "twodash")) +
+  scale_y_continuous(expand = c(0,0), limits = c(0,50))+ 
+  scale_color_hue(labels = c("CON", "ALC", "CON+Iron", "PAE+Iron")) +
+  geom_errorbar(aes(ymin=Lower, ymax=Upper), width=.2) +
+  scale_color_manual(values=c("CON" = "#000000",
+                             "ALC" = "#000000",
+                             "CON+Iron" = "#000000",
+                             "ALC+Iron" = "#000000"
+                             )) +
+  ggtitle("Males, P5 - P22") +
+  ylab(expression("Weight (g)")) + 
+  xlab(expression("Age (days post-birth)")) +
+  theme(plot.title = element_text(hjust = 0.5, size=18, family = "Times New Roman"), 
+        legend.key=element_blank(), 
+        axis.title.y = element_text(size = 16, ),
+        axis.title.x = element_text(size = 16),
+        panel.grid.major = element_blank(), #gets rid of major gridlines
+        panel.grid.minor = element_blank(), #gets rid of minor gridlines
+        panel.background = element_blank(), #turns background white instead of gray
+        axis.line = element_line(colour = "black"), 
+        axis.text=element_text(size=18, color = "black", family = "Times New Roman"), #sets size of x and y axis labels
+        axis.text.x=element_text(vjust = .95, hjust = 0.5, family = "Times New Roman"),
+        axis.title=element_text(size=20, face="bold", family = "Times New Roman"),
+        legend.title=element_text(family = "Times New Roman"), 
+        legend.text=element_text(family = "Times New Roman"))
+  
+print(males)
+dev.off() 
+```
+```{r Male P5-P22 Weight, echo = FALSE}
+print(males)
+```
+
+## Create mean and standard deviation tables for females
+```{r}
+#Weight at P5
+Females.means.5 <- tapply(Females$Weight.P5, as.character(Females$Exposure), mean, na.rm=TRUE)
+Females.means.5 <- as.data.frame(Females.means.5)
+Females.means.5$Exposure <- ActualGroupOrder
+colnames(Females.means.5)[1] <- "Mean" #fix column name
+Females.stdev.5 <- tapply(Females$Weight.P5, as.character(Females$Exposure), sd, na.rm=TRUE)
+Females.means.5$Stdev <- Females.stdev.5
+Females.means.5$Age <- rep("05", 4)
+
+#Weight at P10
+Females.means.10 <- tapply(Females$Weight.P10, as.character(Females$Exposure), mean, na.rm=TRUE)
+Females.means.10 <- as.data.frame(Females.means.10)
+Females.means.10$Exposure <- ActualGroupOrder
+colnames(Females.means.10)[1] <- "Mean" #fix column name
+Females.stdev.10 <- tapply(Females$Weight.P10, as.character(Females$Exposure), sd, na.rm=TRUE)
+Females.means.10$Stdev <- Females.stdev.10
+Females.means.10$Age <- rep("10", 4)
+
+#Weight at P15
+Females.means.15 <- tapply(Females$Weight.P15, as.character(Females$Exposure), mean, na.rm=TRUE)
+Females.means.15 <- as.data.frame(Females.means.15)
+Females.means.15$Exposure <- ActualGroupOrder
+colnames(Females.means.15)[1] <- "Mean" #fix column name
+Females.stdev.15 <- tapply(Females$Weight.P15, as.character(Females$Exposure), sd, na.rm=TRUE)
+Females.means.15$Stdev <- Females.stdev.15
+Females.means.15$Age <- rep("15", 4)
+
+#Weight at P20
+Females.means.20 <- tapply(Females$Weight.P20, as.character(Females$Exposure), mean, na.rm=TRUE)
+Females.means.20 <- as.data.frame(Females.means.20)
+Females.means.20$Exposure <- ActualGroupOrder
+colnames(Females.means.20)[1] <- "Mean" #fix column name
+Females.stdev.20 <- tapply(Females$Weight.P20, as.character(Females$Exposure), sd, na.rm=TRUE)
+Females.means.20$Stdev <- Females.stdev.20
+Females.means.20$Age <- rep("20", 4)
+
+#Weight at P22
+Females.means.22 <- tapply(Females$Weight.P22, as.character(Females$Exposure), mean, na.rm=TRUE)
+Females.means.22 <- as.data.frame(Females.means.22)
+Females.means.22$Exposure <- ActualGroupOrder
+colnames(Females.means.22)[1] <- "Mean" #fix column name
+Females.stdev.22 <- tapply(Females$Weight.P22, as.character(Females$Exposure), sd, na.rm=TRUE)
+Females.means.22$Stdev <- Females.stdev.22
+Females.means.22$Age <- rep("22", 4)
+
+#Merge all tables
+Females_combined <- rbind(Females.means.5, Females.means.10, Females.means.15, Females.means.20, Females.means.22)
+Females_combined <- Females_combined[ ,c(2,1,3,4)]
+Females_combined$Age <- as.numeric(as.vector(Females_combined$Age)) #convert "Age" to a numeric variable so the x-axis adjusts accordingly
+names(Females_combined)[1] <- "Exposure.Group"
+Females_combined$Upper <- Females_combined$Mean + Females_combined$Stdev
+Females_combined$Lower <- Females_combined$Mean - Females_combined$Stdev
+
+Females_combined$Exposure.Group <- factor(Females_combined$Exposure.Group, levels=c("MD", "PAE", "MD+iron", "PAE+iron"))
+```
+
+## Graph Female Weights
+```{r}
+png("FemaleWeight_P5-P22_RatsForBehavior_PAExFe_Linegraph_B&W.png", units="in", width=8, height=6, res=600) 
+
+females <- ggplot(data=Females_combined, aes(x=Age, y=Mean, group=Exposure.Group)) +
+  geom_point(aes(shape=Exposure.Group)) +
+  scale_shape_manual(values=c(15, 17, 18, 19)) +
+  geom_line(aes(linetype=Exposure.Group, color = Exposure.Group)) +
+  scale_linetype_manual(values=c("solid", "longdash", "dotted", "twodash")) +
+  scale_y_continuous(expand = c(0,0), limits = c(0,50))+ 
+  scale_color_hue(labels = c("MD", "PAE", "MD+iron", "PAE+iron")) +
+  geom_errorbar(aes(ymin=Lower, ymax=Upper), width=.2) +
+  scale_color_manual(values=c("MD" = "#000000",
+                             "PAE" = "#000000",
+                             "MD+iron" = "#000000",
+                             "PAE+iron" = "#000000"
+                             )) +
+  ggtitle("Females, P5 - P22") +
+  ylab(expression("Weight (g)")) + 
+  xlab(expression("Age (days post-birth)")) +
+  theme(plot.title = element_text(hjust = 0.5, size=18, family = "Times New Roman"), 
+        legend.key=element_blank(), 
+        axis.title.y = element_text(size = 16, ),
+        axis.title.x = element_text(size = 16),
+        panel.grid.major = element_blank(), #gets rid of major gridlines
+        panel.grid.minor = element_blank(), #gets rid of minor gridlines
+        panel.background = element_blank(), #turns background white instead of gray
+        axis.line = element_line(colour = "black"), 
+        axis.text=element_text(size=18, color = "black", family = "Times New Roman"), #sets size of x and y axis labels
+        axis.text.x=element_text(vjust = .95, hjust = 0.5, family = "Times New Roman"),
+        axis.title=element_text(size=20, face="bold", family = "Times New Roman"),
+        legend.title=element_text(family = "Times New Roman"), 
+        legend.text=element_text(family = "Times New Roman"))
+  
+print(females)
+dev.off() 
+```
+```{r Female P5-P22 Weight, echo = FALSE}
+print(females)
+```
+
+# Session Information
+```{r, echo = FALSE}
+session_info <- devtools::session_info()
+print(session_info)
+```

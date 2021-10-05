@@ -1,0 +1,434 @@
+---
+title: "Fear Conditioning- Reconditioning on Day 8"
+author: "Kaylee Helfrich"
+date: "6/1/2020-2/24/2021"
+output:
+  pdf_document: default
+  html_document: default
+data: "FearConditioning_ALL_DATA_Freezing_ForAnalysis.csv"
+---
+
+Built with R `r getRversion()`
+
+```{r RMarkdown setup, include = FALSE, message = FALSE}
+require(knitr)
+knitr::opts_chunk$set(echo = TRUE, tidy.opts=list(width.cutoff=60), tidy=TRUE)
+knitr::opts_knit$set(root.dir = "~/KayleeStuff/Smith_Lab/Data/Rat_Iron2/Fear_Conditioning")
+options(tinytex.verbose = TRUE)
+```
+
+# Introduction
+This graph shows fear conditioning data from the rat offspring used for behavior testing. This shows only the analysis of the Reconditioning (Day 8) results. The other results are in separate RMarkdown files. The four treatment groups are maltodextrin (MD), prenatal alcohol exposure (PAE), MD+iron, and PAE+iron. These were generated using the standard rat model (PAE or MD at 5g/kg split dose from GD13.5-19.5, and iron dosed at 6mg/kg from GD12.5-19.5). Data are separated into male and female. 
+
+```{r include = FALSE}
+rm(list=ls())
+setwd("~/KayleeStuff/Smith_Lab/Data/Rat_Iron2/Fear_Conditioning")
+library(ggplot2)
+library(plotrix)
+library(dplyr)
+library(tidyverse)
+library(data.table)
+```
+
+```{r Import file and rearrange by treatment to be alphabetical}
+File <- "FearConditioning_ALL_DATA_Freezing_ForAnalysis.csv"
+data <- read.csv(File, header=TRUE) 
+data_frame <- data.frame(data)
+data_frame <- data_frame[order(data_frame$Exposure), ]
+ActualGroupOrder <- c("MD", "MD+Iron", "PAE", "PAE+Iron")
+```
+```{r echo = FALSE}
+print(data_frame[,c(1:11,32:51)])
+```
+
+## Create separate males and females tables
+```{r}
+Males <- data_frame[ which(data_frame$Sex=='M'), ]
+Females <- data_frame[ which(data_frame$Sex=='F'), ]
+```
+
+# Reconditioning Graphs
+
+## Making a data table to graph results from the male reconditioning test
+```{r}
+#Reconditioning baseline Table
+M.Recond.Baseline <- Males %>% select(Exposure, Recond.Baseline)
+M.Recond.Baseline$Phase <- strrep("1-Baseline", 1)
+names(M.Recond.Baseline)[2] <- "Value"
+
+#Reconditioning tone 1 Table
+M.Recond.Tone1 <- Males %>% select(Exposure, Recond.Tone1)
+M.Recond.Tone1$Phase <- strrep("2-Tone1", 1)
+names(M.Recond.Tone1)[2] <- "Value"
+
+#Reconditioning tone 2 Table
+M.Recond.Tone2 <- Males %>% select(Exposure, Recond.Tone2)
+M.Recond.Tone2$Phase <- strrep("3-Tone2", 1)
+names(M.Recond.Tone2)[2] <- "Value"
+
+#Reconditioning tone 3 Table
+M.Recond.Tone3 <- Males %>% select(Exposure, Recond.Tone3)
+M.Recond.Tone3$Phase <- strrep("4-Tone3", 1)
+names(M.Recond.Tone3)[2] <- "Value"
+
+#Reconditioning tone 4 Table
+M.Recond.Tone4 <- Males %>% select(Exposure, Recond.Tone4)
+M.Recond.Tone4$Phase <- strrep("5-Tone4", 1)
+names(M.Recond.Tone4)[2] <- "Value"
+
+#Reconditioning tone 5 Table
+M.Recond.Tone5 <- Males %>% select(Exposure, Recond.Tone5)
+M.Recond.Tone5$Phase <- strrep("6-Tone5", 1)
+names(M.Recond.Tone5)[2] <- "Value"
+
+#Reconditioning tone 6 Table
+M.Recond.Tone6 <- Males %>% select(Exposure, Recond.Tone6)
+M.Recond.Tone6$Phase <- strrep("7-Tone6", 1)
+names(M.Recond.Tone6)[2] <- "Value"
+
+#Combine Tables
+Male.Recond <- rbind(M.Recond.Baseline, M.Recond.Tone1, M.Recond.Tone2, M.Recond.Tone3, M.Recond.Tone4, M.Recond.Tone5, M.Recond.Tone6)
+neworder <- c("MD", "PAE", "MD+Iron", "PAE+Iron")
+Male.Recond <- Male.Recond %>%
+  mutate(Exposure =  factor(Exposure, levels = neworder)) %>%
+  arrange(Exposure)
+```
+
+## Making a graph of the male reconditioning results
+```{r}
+png("FC_Male_Reconditioning_PAExFe_BoxWhisker.png", units = "in", width=12, height=6, res = 300)
+
+Male.Recond.plot <- ggplot(Male.Recond, aes(x = Phase, y = Value)) +
+  geom_boxplot(aes(fill = Exposure)) +
+  ggtitle("Male Fear Conditioning- Reconditioning") +
+  ylab(expression("% Time Freezing")) + 
+  xlab(expression("Stage of Test")) +
+  scale_y_continuous(expand = c(0,0), limits = c(0,105))+
+  scale_x_discrete(labels = c("Baseline","Tone 1", "Tone 2", "Tone 3", "Tone 4", "Tone 5", "Tone 6")) +
+  scale_fill_discrete(name = "Exposure Group") +
+  theme(plot.title = element_text(hjust = 0.5, size=18), 
+        axis.title.y = element_text(size = 16),
+        axis.title.x = element_text(size = 14),
+        #axis.text.x=element_blank(),
+        panel.grid.major = element_blank(), #gets rid of major gridlines
+        panel.grid.minor = element_blank(), #gets rid of minor gridlines
+        panel.background = element_blank(), #turns background white instead of gray
+        axis.line = element_line(colour = "black"), 
+        axis.text=element_text(size=16, color = "black"), #sets size of x and y axis labels
+        axis.title=element_text(size=20,face="bold"))
+
+print(Male.Recond.plot)
+dev.off()
+```
+```{r Male Reconditioning Box Whisker, echo = FALSE}
+print(Male.Recond.plot)
+```
+
+## Making a data table to graph results from the female reconditioning test
+```{r}
+#Reconditioning baseline Table
+F.Recond.Baseline <- Females %>% select(Exposure, Recond.Baseline)
+F.Recond.Baseline$Phase <- strrep("1-Baseline", 1)
+names(F.Recond.Baseline)[2] <- "Value"
+
+#Reconditioning tone 1 Table
+F.Recond.Tone1 <- Females %>% select(Exposure, Recond.Tone1)
+F.Recond.Tone1$Phase <- strrep("2-Tone1", 1)
+names(F.Recond.Tone1)[2] <- "Value"
+
+#Reconditioning tone 2 Table
+F.Recond.Tone2 <- Females %>% select(Exposure, Recond.Tone2)
+F.Recond.Tone2$Phase <- strrep("3-Tone2", 1)
+names(F.Recond.Tone2)[2] <- "Value"
+
+#Reconditioning tone 3 Table
+F.Recond.Tone3 <- Females %>% select(Exposure, Recond.Tone3)
+F.Recond.Tone3$Phase <- strrep("4-Tone3", 1)
+names(F.Recond.Tone3)[2] <- "Value"
+
+#Reconditioning tone 4 Table
+F.Recond.Tone4 <- Females %>% select(Exposure, Recond.Tone4)
+F.Recond.Tone4$Phase <- strrep("5-Tone4", 1)
+names(F.Recond.Tone4)[2] <- "Value"
+
+#Reconditioning tone 5 Table
+F.Recond.Tone5 <- Females %>% select(Exposure, Recond.Tone5)
+F.Recond.Tone5$Phase <- strrep("6-Tone5", 1)
+names(F.Recond.Tone5)[2] <- "Value"
+
+#Reconditioning tone 6 Table
+F.Recond.Tone6 <- Females %>% select(Exposure, Recond.Tone6)
+F.Recond.Tone6$Phase <- strrep("7-Tone6", 1)
+names(F.Recond.Tone6)[2] <- "Value"
+
+#Combine Tables
+Female.Recond <- rbind(F.Recond.Baseline, F.Recond.Tone1, F.Recond.Tone2, F.Recond.Tone3, F.Recond.Tone4, F.Recond.Tone5, F.Recond.Tone6)
+neworder <- c("MD", "PAE", "MD+Iron", "PAE+Iron")
+Female.Recond <- Female.Recond %>%
+  mutate(Exposure =  factor(Exposure, levels = neworder)) %>%
+  arrange(Exposure)
+```
+
+## Making a graph of the female reconditioning results
+```{r}
+png("FC_Female_Reconditioning_PAExFe_BoxWhisker.png", units = "in", width=12, height=6, res = 300)
+
+Female.Recond.plot <- ggplot(Female.Recond, aes(x = Phase, y = Value)) +
+  geom_boxplot(aes(fill = Exposure)) +
+  ggtitle("Female Fear Conditioning- Reconditioning") +
+  ylab(expression("% Time Freezing")) + 
+  xlab(expression("Stage of Test")) +
+  scale_y_continuous(expand = c(0,0), limits = c(0,105))+
+  scale_x_discrete(labels = c("Baseline","Tone 1", "Tone 2", "Tone 3", "Tone 4", "Tone 5", "Tone 6")) +
+  scale_fill_discrete(name = "Exposure Group") +
+  theme(plot.title = element_text(hjust = 0.5, size=18), 
+        axis.title.y = element_text(size = 16),
+        axis.title.x = element_text(size = 14),
+        #axis.text.x=element_blank(),
+        panel.grid.major = element_blank(), #gets rid of major gridlines
+        panel.grid.minor = element_blank(), #gets rid of minor gridlines
+        panel.background = element_blank(), #turns background white instead of gray
+        axis.line = element_line(colour = "black"), 
+        axis.text=element_text(size=16, color = "black"), #sets size of x and y axis labels
+        axis.title=element_text(size=20,face="bold"))
+
+print(Female.Recond.plot)
+dev.off()
+```
+```{r Female Reconditioning Box Whisker, echo = FALSE}
+print(Female.Recond.plot)
+```
+
+# Create line graphs for the reconditioning sessions
+
+## Males
+```{r}
+#Baseline
+Males.1 <- tapply(Males$Recond.Baseline, as.character(Males$Exposure), mean, na.rm=TRUE)
+Males.1 <- as.data.frame(Males.1)
+Males.1$Exposure <- ActualGroupOrder
+colnames(Males.1)[1] <- "Mean" #fix column name
+Males.sterr.1 <- tapply(Males$Recond.Baseline, as.character(Males$Exposure), std.error, na.rm=TRUE)
+Males.1$Sterr <- Males.sterr.1
+Males.1$Minute <- rep("1-Baseline", 4)
+
+#Tone1
+Males.2 <- tapply(Males$Recond.Tone1, as.character(Males$Exposure), mean, na.rm=TRUE)
+Males.2 <- as.data.frame(Males.2)
+Males.2$Exposure <- ActualGroupOrder
+colnames(Males.2)[1] <- "Mean" #fix column name
+Males.sterr.2 <- tapply(Males$Recond.Tone1, as.character(Males$Exposure), std.error, na.rm=TRUE)
+Males.2$Sterr <- Males.sterr.2
+Males.2$Minute <- rep("2-Tone 1", 4)
+
+#Tone2
+Males.3 <- tapply(Males$Recond.Tone2, as.character(Males$Exposure), mean, na.rm=TRUE)
+Males.3 <- as.data.frame(Males.3)
+Males.3$Exposure <- ActualGroupOrder
+colnames(Males.3)[1] <- "Mean" #fix column name
+Males.sterr.3 <- tapply(Males$Recond.Tone2, as.character(Males$Exposure), std.error, na.rm=TRUE)
+Males.3$Sterr <- Males.sterr.3
+Males.3$Minute <- rep("3-Tone 2", 4)
+
+#Tone3
+Males.4 <- tapply(Males$Recond.Tone3, as.character(Males$Exposure), mean, na.rm=TRUE)
+Males.4 <- as.data.frame(Males.4)
+Males.4$Exposure <- ActualGroupOrder
+colnames(Males.4)[1] <- "Mean" #fix column name
+Males.sterr.4 <- tapply(Males$Recond.Tone3, as.character(Males$Exposure), std.error, na.rm=TRUE)
+Males.4$Sterr <- Males.sterr.4
+Males.4$Minute <- rep("4-Tone 3", 4)
+
+#Tone4
+Males.5 <- tapply(Males$Recond.Tone4, as.character(Males$Exposure), mean, na.rm=TRUE)
+Males.5 <- as.data.frame(Males.5)
+Males.5$Exposure <- ActualGroupOrder
+colnames(Males.5)[1] <- "Mean" #fix column name
+Males.sterr.5 <- tapply(Males$Recond.Tone4, as.character(Males$Exposure), std.error, na.rm=TRUE)
+Males.5$Sterr <- Males.sterr.5
+Males.5$Minute <- rep("5-Tone 4", 4)
+
+#Tone5
+Males.6 <- tapply(Males$Recond.Tone6, as.character(Males$Exposure), mean, na.rm=TRUE)
+Males.6 <- as.data.frame(Males.6)
+Males.6$Exposure <- ActualGroupOrder
+colnames(Males.6)[1] <- "Mean" #fix column name
+Males.sterr.6 <- tapply(Males$Recond.Tone6, as.character(Males$Exposure), std.error, na.rm=TRUE)
+Males.6$Sterr <- Males.sterr.6
+Males.6$Minute <- rep("6-Tone 5", 4)
+
+#Tone6
+Males.7 <- tapply(Males$Recond.Tone6, as.character(Males$Exposure), mean, na.rm=TRUE)
+Males.7 <- as.data.frame(Males.7)
+Males.7$Exposure <- ActualGroupOrder
+colnames(Males.7)[1] <- "Mean" #fix column name
+Males.sterr.7 <- tapply(Males$Recond.Tone6, as.character(Males$Exposure), std.error, na.rm=TRUE)
+Males.7$Sterr <- Males.sterr.7
+Males.7$Minute <- rep("7-Tone 6", 4)
+
+#Merge all tables
+Males_combined <- rbind(Males.1, Males.2, Males.3, Males.4, Males.5, Males.6, Males.7)
+Males_combined <- Males_combined[ ,c(2,1,3,4)]
+names(Males_combined)[1] <- "Exposure"
+
+#Create error bar data
+Males_combined$Upper <- Males_combined$Mean + Males_combined$Sterr
+Males_combined$Lower <- Males_combined$Mean - Males_combined$Sterr
+
+Males_combined <- Males_combined %>%
+  mutate(Exposure =  factor(Exposure, levels = neworder)) %>%
+  arrange(Exposure)
+```
+
+## Graph Male Reconditioning Results as a Linegraph
+```{r}
+png("FC_Males_Reconditioning_PAExFe_Linegraph.png", units="in", width=12, height=7, res=600) 
+
+XLabels2 <- c(" Baseline", "Tone 1", "Tone 2", "Tone 3", "Tone 4", "Tone 5", "Tone 6")
+
+males.graph <- ggplot(data=Males_combined, aes(x=Minute, y=Mean, group=Exposure, color=Exposure)) +
+  geom_point() +
+  geom_line() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,105))+ 
+  scale_color_hue(labels = c("MD", "PAE", "MD+Iron", "PAE+Iron")) +
+  geom_errorbar(aes(ymin=Lower, ymax=Upper), width=.2) +
+  ggtitle("Male FC- Reconditioning") +
+  ylab(expression("% Time Freezing")) + 
+  xlab(expression("Phase of Experiment")) +
+  theme(plot.title = element_text(hjust = 0.5, size=18), 
+        axis.title.y = element_text(size = 16),
+        axis.title.x = element_text(size = 14),
+        panel.grid.major = element_blank(), #gets rid of major gridlines
+        panel.grid.minor = element_blank(), #gets rid of minor gridlines
+        panel.background = element_blank(), #turns background white instead of gray
+        axis.line = element_line(colour = "black"), 
+        axis.text=element_text(size=18, color = "black"), #sets size of x and y axis labels
+        axis.text.x=element_text(vjust = .95, hjust = 0.5),
+        axis.title=element_text(size=20,face="bold")) +
+    scale_x_discrete(labels= XLabels2)
+
+print(males.graph)
+dev.off() 
+```
+```{r Male FC Reconditioning Line Graph, echo = FALSE}
+print(males.graph)
+```
+
+## Females
+```{r}
+#Baseline
+Females.1 <- tapply(Females$Recond.Baseline, as.character(Females$Exposure), mean, na.rm=TRUE)
+Females.1 <- as.data.frame(Females.1)
+Females.1$Exposure <- ActualGroupOrder
+colnames(Females.1)[1] <- "Mean" #fix column name
+Females.sterr.1 <- tapply(Females$Recond.Baseline, as.character(Females$Exposure), std.error, na.rm=TRUE)
+Females.1$Sterr <- Females.sterr.1
+Females.1$Minute <- rep("1-Baseline", 4)
+
+#Tone1
+Females.2 <- tapply(Females$Recond.Tone1, as.character(Females$Exposure), mean, na.rm=TRUE)
+Females.2 <- as.data.frame(Females.2)
+Females.2$Exposure <- ActualGroupOrder
+colnames(Females.2)[1] <- "Mean" #fix column name
+Females.sterr.2 <- tapply(Females$Recond.Tone1, as.character(Females$Exposure), std.error, na.rm=TRUE)
+Females.2$Sterr <- Females.sterr.2
+Females.2$Minute <- rep("2-Tone 1", 4)
+
+#Tone2
+Females.3 <- tapply(Females$Recond.Tone2, as.character(Females$Exposure), mean, na.rm=TRUE)
+Females.3 <- as.data.frame(Females.3)
+Females.3$Exposure <- ActualGroupOrder
+colnames(Females.3)[1] <- "Mean" #fix column name
+Females.sterr.3 <- tapply(Females$Recond.Tone2, as.character(Females$Exposure), std.error, na.rm=TRUE)
+Females.3$Sterr <- Females.sterr.3
+Females.3$Minute <- rep("3-Tone 2", 4)
+
+#Tone3
+Females.4 <- tapply(Females$Recond.Tone3, as.character(Females$Exposure), mean, na.rm=TRUE)
+Females.4 <- as.data.frame(Females.4)
+Females.4$Exposure <- ActualGroupOrder
+colnames(Females.4)[1] <- "Mean" #fix column name
+Females.sterr.4 <- tapply(Females$Recond.Tone3, as.character(Females$Exposure), std.error, na.rm=TRUE)
+Females.4$Sterr <- Females.sterr.4
+Females.4$Minute <- rep("4-Tone 3", 4)
+
+#Tone4
+Females.5 <- tapply(Females$Recond.Tone4, as.character(Females$Exposure), mean, na.rm=TRUE)
+Females.5 <- as.data.frame(Females.5)
+Females.5$Exposure <- ActualGroupOrder
+colnames(Females.5)[1] <- "Mean" #fix column name
+Females.sterr.5 <- tapply(Females$Recond.Tone4, as.character(Females$Exposure), std.error, na.rm=TRUE)
+Females.5$Sterr <- Females.sterr.5
+Females.5$Minute <- rep("5-Tone 4", 4)
+
+#Tone5
+Females.6 <- tapply(Females$Recond.Tone6, as.character(Females$Exposure), mean, na.rm=TRUE)
+Females.6 <- as.data.frame(Females.6)
+Females.6$Exposure <- ActualGroupOrder
+colnames(Females.6)[1] <- "Mean" #fix column name
+Females.sterr.6 <- tapply(Females$Recond.Tone6, as.character(Females$Exposure), std.error, na.rm=TRUE)
+Females.6$Sterr <- Females.sterr.6
+Females.6$Minute <- rep("6-Tone 5", 4)
+
+#Tone6
+Females.7 <- tapply(Females$Recond.Tone6, as.character(Females$Exposure), mean, na.rm=TRUE)
+Females.7 <- as.data.frame(Females.7)
+Females.7$Exposure <- ActualGroupOrder
+colnames(Females.7)[1] <- "Mean" #fix column name
+Females.sterr.7 <- tapply(Females$Recond.Tone6, as.character(Females$Exposure), std.error, na.rm=TRUE)
+Females.7$Sterr <- Females.sterr.7
+Females.7$Minute <- rep("7-Tone 6", 4)
+
+#Merge all tables
+Females_combined <- rbind(Females.1, Females.2, Females.3, Females.4, Females.5, Females.6, Females.7)
+Females_combined <- Females_combined[ ,c(2,1,3,4)]
+names(Females_combined)[1] <- "Exposure"
+
+#Create error bar data
+Females_combined$Upper <- Females_combined$Mean + Females_combined$Sterr
+Females_combined$Lower <- Females_combined$Mean - Females_combined$Sterr
+
+Females_combined <- Females_combined %>%
+  mutate(Exposure =  factor(Exposure, levels = neworder)) %>%
+  arrange(Exposure)
+```
+
+## Graph Female Reconditioning Results as a Linegraph
+```{r}
+png("FC_Females_Reconditioning_PAExFe_Linegraph.png", units="in", width=12, height=7, res=600) 
+
+XLabels2 <- c(" Baseline", "Tone 1", "Tone 2", "Tone 3", "Tone 4", "Tone 5", "Tone 6")
+
+Females.graph <- ggplot(data=Females_combined, aes(x=Minute, y=Mean, group=Exposure, color=Exposure)) +
+  geom_point() +
+  geom_line() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,105))+ 
+  scale_color_hue(labels = c("MD", "PAE", "MD+Iron", "PAE+Iron")) +
+  geom_errorbar(aes(ymin=Lower, ymax=Upper), width=.2) +
+  ggtitle("Females FC- Reconditioning") +
+  ylab(expression("% Time Freezing")) + 
+  xlab(expression("Phase of Experiment")) +
+  theme(plot.title = element_text(hjust = 0.5, size=18), 
+        axis.title.y = element_text(size = 16),
+        axis.title.x = element_text(size = 14),
+        panel.grid.major = element_blank(), #gets rid of major gridlines
+        panel.grid.minor = element_blank(), #gets rid of minor gridlines
+        panel.background = element_blank(), #turns background white instead of gray
+        axis.line = element_line(colour = "black"), 
+        axis.text=element_text(size=18, color = "black"), #sets size of x and y axis labels
+        axis.text.x=element_text(vjust = .95, hjust = 0.5),
+        axis.title=element_text(size=20,face="bold")) +
+    scale_x_discrete(labels= XLabels2)
+
+print(Females.graph)
+dev.off() 
+```
+```{r Female FC Reconditioning Line Graph, echo = FALSE}
+print(Females.graph)
+```
+
+# Session Information
+```{r, echo = FALSE}
+session_info <- devtools::session_info()
+print(session_info)
+```

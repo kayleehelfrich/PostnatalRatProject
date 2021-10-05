@@ -1,0 +1,338 @@
+---
+title: "Offspring Performance on the Elevated Plus Maze, AIN-76A diet with MD or Alcohol and Iron Supplement or Water- P27"
+author: "Kaylee Helfrich"
+date: "1/19/2021-"
+output: 
+  pdf_document: default
+  html_document: default
+data: "ElevatedPlusMaze_CLEAN.csv"
+---
+
+Built with R `r getRversion()`
+
+```{r RMarkdown setup, include = FALSE, message = FALSE}
+require(knitr)
+knitr::opts_chunk$set(echo = TRUE, tidy.opts=list(width.cutoff=60), tidy=TRUE)
+knitr::opts_knit$set(root.dir = "~/KayleeStuff/Smith_Lab/Data/Rat_Iron2/Elevated_Plus_Maze")
+options(tinytex.verbose = TRUE)
+```
+
+# Graphing Data from the Elevated Plus Maze
+This document details my graphing of the data from offspring performance on the elevated plus maze. This analysis uses all data that was collected (excluding 1 sample where the lighting was too dark for accurate tracking- trial 1, R077-4). No other samples were excluded because there was no good rationale for the exclusion of any other samples. Data were collected from batches 2-5 on postnatal day 27. Rachel Hodges and Kaylee Helfrich were responsible for running the rats on the EPM. Rats' mothers were Long-Evans rats that were dosed with 5g/kg ethanol or isocaloric maltodextrin from GD13.5-19.5 and also received either an iron supplement (6g/kg, Fer-In-Sol) or the same volume of water as a gavage from GD12.5-GD19.5. The offspring were weaned on P22, and then handled daily for approximately 2-3 minutes per day until they were run on the EPM. See experimental notes for more information on how the EPM was laid out and how data was analyzed on Ethovision. All graphs are mean with standard deviation, since there are not multiple measures per sample. This analysis will allow us to compare the 4 groups, as well as males vs. females. Statistical analysis in JMP will use 3-way ANOVA to assign significance to the measures (male vs female, alcohol vs. MD, iron vs. water). 
+
+# Importing Files and Arranging Data
+```{r include = FALSE}
+rm(list=ls())
+setwd("~/KayleeStuff/Smith_Lab/Data/Rat_Iron2/Elevated_Plus_Maze")
+library(ggplot2)
+library(plotrix)
+library(dplyr)
+library(tidyverse)
+library(extrafont)
+loadfonts(device = "win")
+```
+
+```{r Import file and rearrange by treatment to be alphabetical}
+File <- "ElevatedPlusMaze_CLEAN.csv"
+data <- read.csv(File, header=TRUE) 
+data_frame <- data.frame(data)
+data_frame <- data_frame[order(data_frame$Exposure), ]
+```
+```{r echo = FALSE}
+print(data_frame)
+```
+```{r Prepare data for graphing}
+ActualGroupOrder <- c("CON", "CON+Iron", "PAE", "PAE+Iron")
+```
+
+## Create separate males and females tables
+```{r}
+Males <- data_frame[ which(data_frame$Rat.Sex=='M'), ]
+Females <- data_frame[ which(data_frame$Rat.Sex=='F'), ]
+```
+
+## Males- Equalize Row Number by Exposure
+```{r}
+#Figure out how many rows of empty NA's are needed to equalize the treatment groups
+Groupcount <- Males %>% count(Exposure) #Calculate how many individual Males there are per treatment group
+NumPoints <- max(Groupcount$n) #Create the variable "NumPoints" to count the # of points in the final graphs
+DiffFunc <- function(x) NumPoints - x #Create the function "DiffFunc" to calculate the number of NA rows to be added
+DiffPoints <- as.data.frame(tapply(Groupcount$n, as.character(Groupcount$Exposure), DiffFunc)) #Calculate number of NA rows to be added to each treatment group
+DiffPoints$Exposure <- ActualGroupOrder #add new column so that # of points to be added is assigned to exposure
+colnames(DiffPoints)[1] <- "NumberN" #rename column
+Nrow <- sum(DiffPoints$NumberN) #figure out how many total rows will be added to the DF_extra dataframe
+MDH2O <- DiffPoints[1,1] #for each of these, it is creating a variable for the "vector" below
+MDFe <- DiffPoints[2,1]
+AlcH2O <- DiffPoints[3,1]
+AlcFe <- DiffPoints[4,1] 
+
+#Add extra rows of NAs to equalize groups
+DF_extra <- data.frame(matrix(NA, nrow = Nrow, ncol = 27)) #create an empty dataframe filled with NA's
+vector <- rep(c("CON", "CON+Iron", "PAE", "PAE+Iron"), times = c(MDH2O, MDFe, AlcH2O, AlcFe)) #create the vector to add the treatment groups to the NA matrix
+DF_extra$Exposure <- vector #add in the Exposure column to the DF_extra dataframe
+DF_extra <- DF_extra[,c(1:3,28,4:27)] #rearrange the columns so that they are in the same order as the original DF
+DF_extra <- setNames(DF_extra, names(Males)) #set the names of the new df to match the original df
+Males_new <- rbind(Males, DF_extra) #Rbind the 2 dataframes so that we now have equal treatment group sizes
+print(Males_new %>% count(Exposure)) #check that the groups are now equal
+#rearrange to be in order of Treatment, otherwise the dots get accidentally reassigned to the wrong group
+Males_new <- Males_new[order(Males_new$Exposure), ]
+Male_NumPoints <- NumPoints
+```
+### Number of Missing Points to Expect in Male Graphs
+```{r echo = FALSE}
+print(Nrow)
+```
+
+## Females- Equalize Row Number by Exposure
+```{r}
+#Figure out how many rows of empty NA's are needed to equalize the treatment groups
+Groupcount <- Females %>% count(Exposure) #Calculate how many individual Females there are per treatment group
+NumPoints <- max(Groupcount$n) #Create the variable "NumPoints" to count the # of points in the final graphs
+DiffFunc <- function(x) NumPoints - x #Create the function "DiffFunc" to calculate the number of NA rows to be added
+DiffPoints <- as.data.frame(tapply(Groupcount$n, as.character(Groupcount$Exposure), DiffFunc)) #Calculate number of NA rows to be added to each treatment group
+DiffPoints$Exposure <- ActualGroupOrder #add new column so that # of points to be added is assigned to exposure
+colnames(DiffPoints)[1] <- "NumberN" #rename column
+Nrow <- sum(DiffPoints$NumberN) #figure out how many total rows will be added to the DF_extra dataframe
+MDH2O <- DiffPoints[1,1] #for each of these, it is creating a variable for the "vector" below
+MDFe <- DiffPoints[2,1]
+AlcH2O <- DiffPoints[3,1]
+AlcFe <- DiffPoints[4,1] 
+
+#Add extra rows of NAs to equalize groups
+DF_extra <- data.frame(matrix(NA, nrow = Nrow, ncol = 27)) #create an empty dataframe filled with NA's
+vector <- rep(c("CON", "CON+Iron", "PAE", "PAE+Iron"), times = c(MDH2O, MDFe, AlcH2O, AlcFe)) #create the vector to add the treatment groups to the NA matrix
+DF_extra$Exposure <- vector #add in the Exposure column to the DF_extra dataframe
+DF_extra <- DF_extra[,c(1:3,28,4:27)] #rearrange the columns so that they are in the same order as the original DF
+DF_extra <- setNames(DF_extra, names(Females)) #set the names of the new df to match the original df
+Females_new <- rbind(Females, DF_extra) #Rbind the 2 dataframes so that we now have equal treatment group sizes
+print(Females_new %>% count(Exposure)) #check that the groups are now equal
+#rearrange to be in order of Treatment, otherwise the dots get accidentally reassigned to the wrong group
+Females_new <- Females_new[order(Females_new$Exposure), ]
+Female_NumPoints <- NumPoints
+```
+### Number of Missing Points to Expect in Female Graphs
+```{r echo = FALSE}
+print(Nrow)
+```
+
+# Stacked bar plot of percentages spent in each location
+
+## Males stacked bar plot
+```{r}
+#Percent Time in Open Arms
+Open <- data.frame((Males_new$Cumulative.time.totalopen.CP.s / Males_new$Cumulative.time.arena.CP.s * 100), rep("Open", 80), Males_new$Exposure)
+colnames(Open)[1:3] <- c("Value", "Location", "Exposure")
+Open_M <- as.data.frame(group_by(Open, Exposure) %>% summarize(mean(Value, na.rm=TRUE)))
+colnames(Open_M)[2] <- "Mean"
+Open_S <- as.data.frame(group_by(Open, Exposure) %>% summarize(std.error(Value, na.rm = TRUE)))
+colnames(Open_S)[2] <- "SE"
+Open_Final <- merge(Open_M,Open_S,by="Exposure")
+Open_Final$Location <- rep("Open", 4)
+
+#Percent Time in Closed Arms
+Closed <- data.frame((Males_new$Cumulative.time.totalclosed.CP.s / Males_new$Cumulative.time.arena.CP.s * 100), rep("Closed", 80), Males_new$Exposure)
+colnames(Closed)[1:3] <- c("Value", "Location", "Exposure")
+Closed_M <- as.data.frame(group_by(Closed, Exposure) %>% summarize(mean(Value, na.rm=TRUE)))
+colnames(Closed_M)[2] <- "Mean"
+Closed_S <- as.data.frame(group_by(Closed, Exposure) %>% summarize(std.error(Value, na.rm = TRUE)))
+colnames(Closed_S)[2] <- "SE"
+Closed_Final <- merge(Closed_M,Closed_S,by="Exposure")
+Closed_Final$Location <- rep("Closed", 4)
+
+#Percent Time in Center
+Center <- data.frame((Males_new$Cumulative.time.center.CP.s / Males_new$Cumulative.time.arena.CP.s * 100), rep("Center", 80), Males_new$Exposure)
+colnames(Center)[1:3] <- c("Value", "Location", "Exposure")
+Center_M <- as.data.frame(group_by(Center, Exposure) %>% summarize(mean(Value, na.rm=TRUE)))
+colnames(Center_M)[2] <- "Mean"
+Center_S <- as.data.frame(group_by(Center, Exposure) %>% summarize(std.error(Value, na.rm = TRUE)))
+colnames(Center_S)[2] <- "SE"
+Center_Final <- merge(Center_M,Center_S,by="Exposure")
+Center_Final$Location <- rep("Center", 4)
+
+#Combine Graphs
+Male.stacked <- rbind(Open_Final, Closed_Final, Center_Final)
+Male.stacked$New.Mean <- c(11.41910326,
+16.49735354,
+12.15599165,
+16.90864936,
+81.55686781,
+74.49369504,
+80.05649,
+75.33568972,
+7.024028936,
+9.008951422,
+7.787518346,
+7.755660929)
+Male.stacked$Upper <- Male.stacked$New.Mean + Male.stacked$SE
+Male.stacked$Lower <- Male.stacked$New.Mean - Male.stacked$SE
+
+Male.stacked$New.Upper <- c(14.076433,
+18.870543,
+14.058462,
+20.170452,
+96.92017676,
+94.06832538,
+94.91379025,
+95.97873887,
+101.5066855,
+100.8854672,
+101.1551244,
+101.0433103)
+Male.stacked$New.Lower <- c(8.761774,
+14.124164,
+10.253522,
+13.646847,
+89.03176536,
+87.91377178,
+89.51117305,
+88.50993927,
+98.4933145,
+99.1145328,
+98.8448756,
+98.9566897)
+
+#Make Graph#
+png("EPM_Male_PercentTimeInLocations_StackedGraph_AllData_PAExFe_B&W.png", units="in", width=7, height=7, res=600) 
+
+sets <- c("CON", "PAE", "CON+Iron", "PAE+Iron")
+
+p <- ggplot(Male.stacked, aes(fill=Location, y=New.Mean, x=Exposure)) + 
+    geom_bar(position="stack", stat="identity", color="black") +
+    geom_errorbar(aes(ymin=New.Lower, ymax=New.Upper), width=.2,
+                position=position_dodge(0)) + 
+  scale_fill_manual(values=c("grey100","grey51", "grey75")) +
+  scale_y_continuous(expand = c(0,0), limits = c(0,105)) +
+  ggtitle("Males- Percent Time Spent in Locations of Maze") +
+  ylab(expression("Percent Time in Location (%)")) + 
+  theme(plot.title = element_text(hjust = 0.5, size=18, family = "Times New Roman"), 
+        axis.title.x = element_blank(), #gets rid of x-axis label
+        axis.title.y = element_text(size = 20, family = "Times New Roman"),
+        panel.grid.major = element_blank(), #gets rid of major gridlines
+        panel.grid.minor = element_blank(), #gets rid of minor gridlines
+        panel.background = element_blank(), #turns background white instead of gray
+        axis.line = element_line(colour = "black"), 
+        axis.text=element_text(size=18, color = "black", family = "Times New Roman"), #sets size of x and y axis labels
+        axis.text.x=element_text(angle = 45, vjust = .95, hjust = 0.9, family = "Times New Roman"),
+        axis.title=element_text(size=20,face="bold", family = "Times New Roman"),
+        legend.title=element_text(family = "Times New Roman"),
+        legend.text = element_text(family = "Times New Roman")) +
+  scale_x_discrete (limits = sets)
+print(p)
+dev.off() 
+```
+```{r Male Percent Time, echo = FALSE}
+print(p)
+```
+
+## Females stacked bar plot
+```{r}
+#Percent Time in Open Arms
+Open <- data.frame((Females_new$Cumulative.time.totalopen.CP.s / Females_new$Cumulative.time.arena.CP.s * 100), rep("Open", 84), Females_new$Exposure)
+colnames(Open)[1:3] <- c("Value", "Location", "Exposure")
+Open_M <- as.data.frame(group_by(Open, Exposure) %>% summarize(mean(Value, na.rm=TRUE)))
+colnames(Open_M)[2] <- "Mean"
+Open_S <- as.data.frame(group_by(Open, Exposure) %>% summarize(std.error(Value, na.rm = TRUE)))
+colnames(Open_S)[2] <- "SE"
+Open_Final <- merge(Open_M,Open_S,by="Exposure")
+Open_Final$Location <- rep("Open", 4)
+
+#Percent Time in Closed Arms
+Closed <- data.frame((Females_new$Cumulative.time.totalclosed.CP.s / Females_new$Cumulative.time.arena.CP.s * 100), rep("Closed", 84), Females_new$Exposure)
+colnames(Closed)[1:3] <- c("Value", "Location", "Exposure")
+Closed_M <- as.data.frame(group_by(Closed, Exposure) %>% summarize(mean(Value, na.rm=TRUE)))
+colnames(Closed_M)[2] <- "Mean"
+Closed_S <- as.data.frame(group_by(Closed, Exposure) %>% summarize(std.error(Value, na.rm = TRUE)))
+colnames(Closed_S)[2] <- "SE"
+Closed_Final <- merge(Closed_M,Closed_S,by="Exposure")
+Closed_Final$Location <- rep("Closed", 4)
+
+#Percent Time in Center
+Center <- data.frame((Females_new$Cumulative.time.center.CP.s / Females_new$Cumulative.time.arena.CP.s * 100), rep("Center", 84), Females_new$Exposure)
+colnames(Center)[1:3] <- c("Value", "Location", "Exposure")
+Center_M <- as.data.frame(group_by(Center, Exposure) %>% summarize(mean(Value, na.rm=TRUE)))
+colnames(Center_M)[2] <- "Mean"
+Center_S <- as.data.frame(group_by(Center, Exposure) %>% summarize(std.error(Value, na.rm = TRUE)))
+colnames(Center_S)[2] <- "SE"
+Center_Final <- merge(Center_M,Center_S,by="Exposure")
+Center_Final$Location <- rep("Center", 4)
+
+#Combine Graphs
+Female.stacked <- rbind(Open_Final, Closed_Final, Center_Final)
+Female.stacked$New.Mean <- c(9.520935526,
+14.53898598,
+6.659305336,
+14.93711891,
+83.05183114,
+75.94658769,
+87.58525046,
+76.8096508,
+7.427233338,
+9.514426333,
+5.755444204,
+8.253230292)
+Female.stacked$Upper <- Female.stacked$New.Mean + Female.stacked$SE
+Female.stacked$Lower <- Female.stacked$New.Mean - Female.stacked$SE
+
+Female.stacked$New.Upper <- c(11.44823,
+16.453025,
+8.499388,
+17.916742,
+95.27840126,
+93.57730797,
+96.6030045,
+94.91887461,
+101.1314173,
+100.8724706,
+100.8887711,
+101.0551364)
+Female.stacked$New.Lower <- c(7.593641,
+12.624947,
+4.819222,
+11.957496,
+89.86713206,
+87.39383937,
+91.8861071,
+88.57466481,
+98.8685827,
+99.1275294,
+99.1112289,
+98.9448636)
+
+#Make Graph#
+png("EPM_Female_PercentTimeInLocations_StackedGraph_AllData_PAExFe_B&W.png", units="in", width=7, height=7, res=600) 
+
+sets <- c("CON", "PAE", "CON+Iron", "PAE+Iron")
+
+p <- ggplot(Female.stacked, aes(fill=Location, y=New.Mean, x=Exposure)) + 
+    geom_bar(position="stack", stat="identity", color="black") +
+    geom_errorbar(aes(ymin=New.Lower, ymax=New.Upper), width=.2,
+                position=position_dodge(0)) + 
+  scale_fill_manual(values=c("grey100","grey51", "grey75")) +
+  scale_y_continuous(expand = c(0,0), limits = c(0,105)) +
+  ggtitle("Females- Percent Time Spent in Locations of Maze") +
+  ylab(expression("Percent Time in Location (%)")) + 
+  theme(plot.title = element_text(hjust = 0.5, size=18, family = "Times New Roman"), 
+        axis.title.x = element_blank(), #gets rid of x-axis label
+        axis.title.y = element_text(size = 20, family = "Times New Roman"),
+        panel.grid.major = element_blank(), #gets rid of major gridlines
+        panel.grid.minor = element_blank(), #gets rid of minor gridlines
+        panel.background = element_blank(), #turns background white instead of gray
+        axis.line = element_line(colour = "black"), 
+        axis.text=element_text(size=18, color = "black", family = "Times New Roman"), #sets size of x and y axis labels
+        axis.text.x=element_text(angle = 45, vjust = .95, hjust = 0.9, family = "Times New Roman"),
+        axis.title=element_text(size=20,face="bold", family = "Times New Roman"),
+        legend.title=element_text(family = "Times New Roman"),
+        legend.text = element_text(family = "Times New Roman")) +
+    scale_x_discrete (limits = sets)
+print(p)
+dev.off() 
+```
+```{r Female Percent Time, echo = FALSE}
+print(p)
+```
+
+# Session Information
+```{r, echo = FALSE}
+session_info <- devtools::session_info()
+print(session_info)
+```

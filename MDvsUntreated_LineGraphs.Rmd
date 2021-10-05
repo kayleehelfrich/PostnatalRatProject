@@ -1,0 +1,280 @@
+---
+title: "Comparing MD and Untreated Offspring Growth P5-P50, and during T-maze Food Deprivation"
+author: "Kaylee Helfrich"
+date: "2/19/2021-"
+output:
+  pdf_document: default
+  html_document: default
+data: "MDvsUntreatedRatGrowth.csv"
+---
+
+Built with R `r getRversion()`
+
+```{r RMarkdown setup, include = FALSE, message = FALSE}
+require(knitr)
+knitr::opts_chunk$set(echo = TRUE, tidy.opts=list(width.cutoff=60), tidy=TRUE)
+knitr::opts_knit$set(root.dir = "~/KayleeStuff/Smith_Lab/Data/Rat_Iron2/MDvsUntreated")
+options(tinytex.verbose = TRUE)
+```
+
+# Introduction
+These graphs show offspring growth from P5-P50 of only the MD and Untreated rats from the rats generated in the rat iron project in 2020. They also compare growth during the T-maze food deprivation in the MD and untreated groups. This graph includes every rat born from a litter (as long as the litter was dosed correctly), not excluding siblings (except siblings that were sac'd on P22 for the MD group). As long as a rat was weighed, that data is included. None of the data is grouped by litter, and all siblings are included equally. Data are not separated by sex.
+
+```{r include = FALSE}
+rm(list=ls())
+setwd("~/KayleeStuff/Smith_Lab/Data/Rat_Iron2/MDvsUntreated")
+library(ggplot2)
+library(plotrix)
+library(dplyr)
+```
+
+```{r Import file and rearrange by treatment to be alphabetical}
+File <- "MDvsUntreatedRatGrowth.csv"
+data <- read.csv(File, header=TRUE) 
+data_frame <- data.frame(data)
+data_frame <- data_frame[order(data_frame$Group), ]
+```
+```{r echo = FALSE}
+print(data_frame)
+```
+```{r}
+ActualGroupOrder <- c("2-MD, Females", "1-MD, Males", "4-Untreated, Females", "3-Untreated, Males")
+```
+
+# Growth P5-P50
+
+## Create mean and standard deviation tables
+```{r}
+#Weight at P5
+Means.5 <- tapply(data_frame$Weight.P5, as.character(data_frame$Group), mean, na.rm=TRUE)
+Means.5 <- as.data.frame(Means.5)
+Means.5$Exposure <- ActualGroupOrder
+colnames(Means.5)[1] <- "Mean" #fix column name
+data_frame.stdev.5 <- tapply(data_frame$Weight.P5, as.character(data_frame$Group), sd, na.rm=TRUE)
+Means.5$Stdev <- data_frame.stdev.5
+Means.5$Age <- rep("05", 4)
+
+#Weight at P10
+Means.10 <- tapply(data_frame$Weight.P10, as.character(data_frame$Group), mean, na.rm=TRUE)
+Means.10 <- as.data.frame(Means.10)
+Means.10$Exposure <- ActualGroupOrder
+colnames(Means.10)[1] <- "Mean" #fix column name
+data_frame.stdev.10 <- tapply(data_frame$Weight.P10, as.character(data_frame$Group), sd, na.rm=TRUE)
+Means.10$Stdev <- data_frame.stdev.10
+Means.10$Age <- rep("10", 4)
+
+#Weight at P15
+Means.15 <- tapply(data_frame$Weight.P15, as.character(data_frame$Group), mean, na.rm=TRUE)
+Means.15 <- as.data.frame(Means.15)
+Means.15$Exposure <- ActualGroupOrder
+colnames(Means.15)[1] <- "Mean" #fix column name
+data_frame.stdev.15 <- tapply(data_frame$Weight.P15, as.character(data_frame$Group), sd, na.rm=TRUE)
+Means.15$Stdev <- data_frame.stdev.15
+Means.15$Age <- rep("15", 4)
+
+#Weight at P20
+Means.20 <- tapply(data_frame$Weight.P20, as.character(data_frame$Group), mean, na.rm=TRUE)
+Means.20 <- as.data.frame(Means.20)
+Means.20$Exposure <- ActualGroupOrder
+colnames(Means.20)[1] <- "Mean" #fix column name
+data_frame.stdev.20 <- tapply(data_frame$Weight.P20, as.character(data_frame$Group), sd, na.rm=TRUE)
+Means.20$Stdev <- data_frame.stdev.20
+Means.20$Age <- rep("20", 4)
+
+#Weight at P22
+Means.22 <- tapply(data_frame$Weight.P22, as.character(data_frame$Group), mean, na.rm=TRUE)
+Means.22 <- as.data.frame(Means.22)
+Means.22$Exposure <- ActualGroupOrder
+colnames(Means.22)[1] <- "Mean" #fix column name
+data_frame.stdev.22 <- tapply(data_frame$Weight.P22, as.character(data_frame$Group), sd, na.rm=TRUE)
+Means.22$Stdev <- data_frame.stdev.22
+Means.22$Age <- rep("22", 4)
+
+#Weight at P28
+Means.28 <- tapply(data_frame$Weight.P28, as.character(data_frame$Group), mean, na.rm=TRUE)
+Means.28 <- as.data.frame(Means.28)
+Means.28$Exposure <- ActualGroupOrder
+colnames(Means.28)[1] <- "Mean" #fix column name
+data_frame.stdev.28 <- tapply(data_frame$Weight.P28, as.character(data_frame$Group), sd, na.rm=TRUE)
+Means.28$Stdev <- data_frame.stdev.28
+Means.28$Age <- rep("28", 4)
+
+#Weight at P35
+Means.35 <- tapply(data_frame$Weight.P35, as.character(data_frame$Group), mean, na.rm=TRUE)
+Means.35 <- as.data.frame(Means.35)
+Means.35$Exposure <- ActualGroupOrder
+colnames(Means.35)[1] <- "Mean" #fix column name
+data_frame.stdev.35 <- tapply(data_frame$Weight.P35, as.character(data_frame$Group), sd, na.rm=TRUE)
+Means.35$Stdev <- data_frame.stdev.35
+Means.35$Age <- rep("35", 4)
+
+#Weight at P42
+Means.42 <- tapply(data_frame$Weight.P42, as.character(data_frame$Group), mean, na.rm=TRUE)
+Means.42 <- as.data.frame(Means.42)
+Means.42$Exposure <- ActualGroupOrder
+colnames(Means.42)[1] <- "Mean" #fix column name
+data_frame.stdev.42 <- tapply(data_frame$Weight.P42, as.character(data_frame$Group), sd, na.rm=TRUE)
+Means.42$Stdev <- data_frame.stdev.42
+Means.42$Age <- rep("42", 4)
+
+#Weight at P50
+Means.50 <- tapply(data_frame$Weight.P50, as.character(data_frame$Group), mean, na.rm=TRUE)
+Means.50 <- as.data.frame(Means.50)
+Means.50$Exposure <- ActualGroupOrder
+colnames(Means.50)[1] <- "Mean" #fix column name
+data_frame.stdev.50 <- tapply(data_frame$Weight.P50, as.character(data_frame$Group), sd, na.rm=TRUE)
+Means.50$Stdev <- data_frame.stdev.50
+Means.50$Age <- rep("50", 4)
+
+#Merge all tables
+Combined <- rbind(Means.5, Means.10, Means.15, Means.20, Means.22, Means.28, Means.35, Means.42, Means.50)
+Combined <- Combined[ ,c(2,1,3,4)]
+Combined$Age <- as.numeric(as.vector(Combined$Age)) #convert "Age" to a numeric variable so the x-axis adjusts accordingly
+Combined$Upper <- Combined$Mean + Combined$Stdev
+Combined$Lower <- Combined$Mean - Combined$Stdev
+```
+
+## Graph Growth
+```{r}
+png("Growth_P5-P50_MDvsUntreated_PAExFe_Linegraph.png", units="in", width=8, height=6, res=600) 
+
+p <- ggplot(data=Combined, aes(x=Age, y=Mean, group=Exposure, color=Exposure)) +
+  geom_point() +
+  geom_line() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,300))+ 
+  scale_color_hue(labels = c("MD Males", "MD Females", "Untreated Males", "Untreated Females")) +
+  geom_errorbar(aes(ymin=Lower, ymax=Upper), width=.2) +
+  ggtitle("Growth") +
+  ylab(expression("Weight (g)")) + 
+  xlab(expression("Offspring Age (days post-birth)")) +
+  theme(plot.title = element_text(hjust = 0.5, size=18), 
+        axis.title.y = element_text(size = 16),
+        axis.title.x = element_text(size = 16),
+        panel.grid.major = element_blank(), #gets rid of major gridlines
+        panel.grid.minor = element_blank(), #gets rid of minor gridlines
+        panel.background = element_blank(), #turns background white instead of gray
+        axis.line = element_line(colour = "black"), 
+        axis.text=element_text(size=18, color = "black"), #sets size of x and y axis labels
+        axis.text.x=element_text(vjust = .95, hjust = 0.9),
+        axis.title=element_text(size=20,face="bold"))
+  
+print(p)
+dev.off() 
+```
+```{r P5-P50 Weight Gain, echo = FALSE}
+print(p)
+```
+
+# Growth During T-maze Food deprivation
+
+## Create mean and standard deviation tables
+```{r}
+#Weight on Saturday
+Means.Saturday <- tapply(data_frame$Weight.Sat, as.character(data_frame$Group), mean, na.rm=TRUE)
+Means.Saturday <- as.data.frame(Means.Saturday)
+Means.Saturday$Exposure <- ActualGroupOrder
+colnames(Means.Saturday)[1] <- "Mean" #fix column name
+data_frame.stdev.Sat <- tapply(data_frame$Weight.Sat, as.character(data_frame$Group), sd, na.rm=TRUE)
+Means.Saturday$Stdev <- data_frame.stdev.Sat
+Means.Saturday$Day <- rep("1-Saturday", 4)
+
+#Weight on Sunday
+Means.Sunday <- tapply(data_frame$Weight.Sun, as.character(data_frame$Group), mean, na.rm=TRUE)
+Means.Sunday <- as.data.frame(Means.Sunday)
+Means.Sunday$Exposure <- ActualGroupOrder
+colnames(Means.Sunday)[1] <- "Mean" #fix column name
+data_frame.stdev.Sun <- tapply(data_frame$Weight.Sun, as.character(data_frame$Group), sd, na.rm=TRUE)
+Means.Sunday$Stdev <- data_frame.stdev.Sun
+Means.Sunday$Day <- rep("2-Sunday", 4)
+
+#Weight on Monday
+Means.Monday <- tapply(data_frame$Weight.Mon, as.character(data_frame$Group), mean, na.rm=TRUE)
+Means.Monday <- as.data.frame(Means.Monday)
+Means.Monday$Exposure <- ActualGroupOrder
+colnames(Means.Monday)[1] <- "Mean" #fix column name
+data_frame.stdev.Mon <- tapply(data_frame$Weight.Mon, as.character(data_frame$Group), sd, na.rm=TRUE)
+Means.Monday$Stdev <- data_frame.stdev.Mon
+Means.Monday$Day <- rep("3-Monday", 4)
+
+#Weight on Tuesday
+Means.Tuesday <- tapply(data_frame$Weight.Tues, as.character(data_frame$Group), mean, na.rm=TRUE)
+Means.Tuesday <- as.data.frame(Means.Tuesday)
+Means.Tuesday$Exposure <- ActualGroupOrder
+colnames(Means.Tuesday)[1] <- "Mean" #fix column name
+data_frame.stdev.Tues <- tapply(data_frame$Weight.Tues, as.character(data_frame$Group), sd, na.rm=TRUE)
+Means.Tuesday$Stdev <- data_frame.stdev.Tues
+Means.Tuesday$Day <- rep("4-Tuesday", 4)
+
+#Weight on Wednesday
+Means.Wednesday <- tapply(data_frame$Weight.Wed, as.character(data_frame$Group), mean, na.rm=TRUE)
+Means.Wednesday <- as.data.frame(Means.Wednesday)
+Means.Wednesday$Exposure <- ActualGroupOrder
+colnames(Means.Wednesday)[1] <- "Mean" #fix column name
+data_frame.stdev.Wed <- tapply(data_frame$Weight.Wed, as.character(data_frame$Group), sd, na.rm=TRUE)
+Means.Wednesday$Stdev <- data_frame.stdev.Wed
+Means.Wednesday$Day <- rep("5-Wednesday", 4)
+
+#Weight on Thursday
+Means.Thursday <- tapply(data_frame$Weight.Thurs, as.character(data_frame$Group), mean, na.rm=TRUE)
+Means.Thursday <- as.data.frame(Means.Thursday)
+Means.Thursday$Exposure <- ActualGroupOrder
+colnames(Means.Thursday)[1] <- "Mean" #fix column name
+data_frame.stdev.Thurs <- tapply(data_frame$Weight.Thurs, as.character(data_frame$Group), sd, na.rm=TRUE)
+Means.Thursday$Stdev <- data_frame.stdev.Thurs
+Means.Thursday$Day <- rep("6-Thursday", 4)
+
+#Weight on Friday
+Means.Friday <- tapply(data_frame$Weight.Fri, as.character(data_frame$Group), mean, na.rm=TRUE)
+Means.Friday <- as.data.frame(Means.Friday)
+Means.Friday$Exposure <- ActualGroupOrder
+colnames(Means.Friday)[1] <- "Mean" #fix column name
+data_frame.stdev.Fri <- tapply(data_frame$Weight.Fri, as.character(data_frame$Group), sd, na.rm=TRUE)
+Means.Friday$Stdev <- data_frame.stdev.Fri
+Means.Friday$Day <- rep("7-Friday", 4)
+
+#Merge all tables
+Combined <- rbind(Means.Saturday, Means.Sunday, Means.Monday, Means.Tuesday, Means.Wednesday, Means.Thursday, Means.Friday)
+Combined <- Combined[ ,c(2,1,3,4)]
+Combined$Upper <- Combined$Mean + Combined$Stdev
+Combined$Lower <- Combined$Mean - Combined$Stdev
+```
+
+## Graph Growth
+```{r}
+png("WeightDuringTmaze_Sat-Fri_MDvsUntreated_PAExFe_Linegraph.png", units="in", width=12, height=5, res=600) 
+
+XLabels <- c("Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday")
+
+p <- ggplot(data=Combined, aes(x=Day, y=Mean, group=Exposure, color=Exposure)) +
+  geom_point() +
+  geom_line() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,200))+ 
+  scale_color_hue(labels = c("MD Males", "MD Females", "Untreated Males", "Untreated Females")) +
+  geom_errorbar(aes(ymin=Lower, ymax=Upper), width=.2) +
+  ggtitle("Weight Change During T-maze Food Deprivation") +
+  ylab(expression("Weight (g)")) + 
+  xlab(expression("Day of T-maze")) +
+  theme(plot.title = element_text(hjust = 0.5, size=18), 
+        axis.title.y = element_text(size = 16),
+        axis.title.x = element_text(size = 16),
+        panel.grid.major = element_blank(), #gets rid of major gridlines
+        panel.grid.minor = element_blank(), #gets rid of minor gridlines
+        panel.background = element_blank(), #turns background white instead of gray
+        axis.line = element_line(colour = "black"), 
+        axis.text=element_text(size=16, color = "black"), #sets size of x and y axis labels
+        axis.text.x=element_text(vjust = .95, hjust = 0.5),
+        axis.title=element_text(size=20,face="bold")) +
+  scale_x_discrete(labels= XLabels)
+  
+print(p)
+dev.off() 
+```
+```{r Weight During Tmaze, echo = FALSE}
+print(p)
+```
+
+# Session Information
+```{r, echo = FALSE}
+session_info <- devtools::session_info()
+print(session_info)
+```

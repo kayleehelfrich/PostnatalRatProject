@@ -1,0 +1,608 @@
+---
+title: "T-maze Learning and Memory"
+author: "Kaylee Helfrich"
+date: "5/29/2020-2/22/2021"
+output:
+  pdf_document: default
+  html_document: default
+data: "T-maze_AllData.csv"
+---
+
+Built with R `r getRversion()`
+
+```{r RMarkdown setup, include = FALSE, message = FALSE}
+require(knitr)
+knitr::opts_chunk$set(echo = TRUE, tidy.opts=list(width.cutoff=60), tidy=TRUE)
+knitr::opts_knit$set(root.dir = "~/KayleeStuff/Smith_Lab/Data/Rat_Iron2/T-maze")
+options(tinytex.verbose = TRUE)
+```
+
+# Introduction
+This graph shows T-maze data from the rat offspring used for behavior testing. The four exposure groups are maltodextrin (MD), prenatal alcohol exposure (PAE), MD+iron, and PAE+iron. These were generated using the standard rat model (PAE or MD at 5g/kg split dose from GD13.5-19.5, and iron dosed at 6mg/kg from GD12.5-19.5). Data are separated into male and female. These graphs display the data in a few different ways, such as line graphs to show learning across the training sessions and boxplots to show data on Sessions to criterion and memory at the 30s and 60s time delays. 
+
+```{r include = FALSE}
+rm(list=ls())
+setwd("~/KayleeStuff/Smith_Lab/Data/Rat_Iron2/T-maze")
+library(ggplot2)
+library(plotrix)
+library(dplyr)
+library(tidyverse)
+library(extrafont)
+loadfonts(device = "win")
+```
+
+```{r Import file and rearrange by Exposure to be alphabetical}
+File <- "Tmaze_AllData.csv"
+data <- read.csv(File, header=TRUE) 
+data_frame <- data.frame(data)
+data_frame <- data_frame[order(data_frame$Exposure), ]
+```
+```{r echo = FALSE}
+print(data_frame)
+```
+```{r}
+ActualGroupOrder <- c("CON", "CON+Iron", "PAE", "PAE+Iron")
+```
+
+## Create separate males and females tables
+```{r}
+Males <- data_frame[ which(data_frame$Sex=='M'), ]
+Females <- data_frame[ which(data_frame$Sex=='F'), ]
+```
+
+# Create line graphs for the learning sessions
+This shows how the rats learn, moving from 50% correct to near-100% correct.  
+
+## Create mean and standard deviation table for males
+```{r}
+#Session 1
+Males.1 <- tapply(Males$Training.1, as.character(Males$Exposure), mean, na.rm=TRUE)
+Males.1 <- as.data.frame(Males.1)
+Males.1$Exposure <- ActualGroupOrder
+colnames(Males.1)[1] <- "Mean" #fix column name
+Males.stdev.1 <- tapply(Males$Training.1, as.character(Males$Exposure), std.error, na.rm=TRUE)
+Males.1$Stdev <- Males.stdev.1
+Males.1$Session <- rep("1", 4)
+
+#Session 2
+Males.2 <- tapply(Males$Training.2, as.character(Males$Exposure), mean, na.rm=TRUE)
+Males.2 <- as.data.frame(Males.2)
+Males.2$Exposure <- ActualGroupOrder
+colnames(Males.2)[1] <- "Mean" #fix column name
+Males.stdev.2 <- tapply(Males$Training.2, as.character(Males$Exposure), std.error, na.rm=TRUE)
+Males.2$Stdev <- Males.stdev.2
+Males.2$Session <- rep("2", 4)
+
+#Session 3
+Males.3 <- tapply(Males$Training.3, as.character(Males$Exposure), mean, na.rm=TRUE)
+Males.3 <- as.data.frame(Males.3)
+Males.3$Exposure <- ActualGroupOrder
+colnames(Males.3)[1] <- "Mean" #fix column name
+Males.stdev.3 <- tapply(Males$Training.3, as.character(Males$Exposure), std.error, na.rm=TRUE)
+Males.3$Stdev <- Males.stdev.3
+Males.3$Session <- rep("3", 4)
+
+#Session 4
+Males.4 <- tapply(Males$Training.4, as.character(Males$Exposure), mean, na.rm=TRUE)
+Males.4 <- as.data.frame(Males.4)
+Males.4$Exposure <- ActualGroupOrder
+colnames(Males.4)[1] <- "Mean" #fix column name
+Males.stdev.4 <- tapply(Males$Training.4, as.character(Males$Exposure), std.error, na.rm=TRUE)
+Males.4$Stdev <- Males.stdev.4
+Males.4$Session <- rep("4", 4)
+
+#Session 5
+Males.5 <- tapply(Males$Training.5, as.character(Males$Exposure), mean, na.rm=TRUE)
+Males.5 <- as.data.frame(Males.5)
+Males.5$Exposure <- ActualGroupOrder
+colnames(Males.5)[1] <- "Mean" #fix column name
+Males.stdev.5 <- tapply(Males$Training.5, as.character(Males$Exposure), std.error, na.rm=TRUE)
+Males.5$Stdev <- Males.stdev.5
+Males.5$Session <- rep("5", 4)
+
+#Session 6
+Males.6 <- tapply(Males$Training.6, as.character(Males$Exposure), mean, na.rm=TRUE)
+Males.6 <- as.data.frame(Males.6)
+Males.6$Exposure <- ActualGroupOrder
+colnames(Males.6)[1] <- "Mean" #fix column name
+Males.stdev.6 <- tapply(Males$Training.6, as.character(Males$Exposure), std.error, na.rm=TRUE)
+Males.6$Stdev <- Males.stdev.6
+Males.6$Session <- rep("6", 4)
+
+#Merge all tables
+Males_training_combined <- rbind(Males.1, Males.2, Males.3, Males.4, Males.5, Males.6)
+Males_training_combined <- Males_training_combined[ ,c(2,1,3,4)]
+Males_training_combined$Session <- as.numeric(as.vector(Males_training_combined$Session)) #convert "Session" to a numeric variable so the x-axis adjusts accordingly
+names(Males_training_combined)[1] <- "Exposure"
+
+#Adjust numbers to be a percent instead of a decimal
+Males_training_combined$Mean <- Males_training_combined$Mean * 100
+Males_training_combined$Stdev <- Males_training_combined$Stdev * 100
+
+#Create error bar data
+Males_training_combined$Upper <- Males_training_combined$Mean + Males_training_combined$Stdev
+Males_training_combined$Lower <- Males_training_combined$Mean - Males_training_combined$Stdev
+
+Males_training_combined$Exposure <- factor(Males_training_combined$Exposure, levels=c("CON", "PAE", "CON+Iron", "PAE+Iron"))
+```
+
+## Graph Male T-maze Learning- With Error Bars
+```{r}
+png("TmazeLearning_Males_StdError_PAExFe_Linegraph_B&W.png", units="in", width=8, height=6, res=600) 
+
+males.training <- ggplot(data=Males_training_combined, aes(x=Session, y=Mean, group=Exposure)) +
+  geom_point(aes(shape=Exposure)) +
+  scale_shape_manual(values=c(15, 17, 18, 19)) +
+  geom_line(aes(linetype=Exposure, color = Exposure)) +
+  scale_linetype_manual(values=c("solid", "longdash", "dotted", "twodash")) +
+  scale_y_continuous(expand = c(0,0), limits = c(0,105))+ 
+  scale_color_hue(labels = c("MD", "PAE", "MD+Iron", "PAE+Iron")) +
+  geom_errorbar(aes(ymin=Lower, ymax=Upper), width=.2) +
+  ggtitle("Male Learning Curve on the T-maze") +
+  ylab(expression("% Correct Trials")) + 
+  xlab(expression("Session Number")) +
+  geom_hline(yintercept=50, linetype="dashed") +
+  geom_hline(yintercept=75) +
+  scale_color_manual(values=c("CON" = "#000000",
+                             "PAE" = "#000000",
+                             "CON+Iron" = "#000000",
+                             "PAE+Iron" = "#000000"
+                             )) +
+  theme(plot.title = element_text(hjust = 0.5, size=18, family = "Times New Roman"), 
+        legend.key=element_blank(), 
+        axis.title.y = element_text(size = 20, family = "Times New Roman"),
+        axis.title.x = element_text(size = 20, family = "Times New Roman"),
+        panel.grid.major = element_blank(), #gets rid of major gridlines
+        panel.grid.minor = element_blank(), #gets rid of minor gridlines
+        panel.background = element_blank(), #turns background white instead of gray
+        axis.line = element_line(colour = "black"), 
+        axis.text=element_text(size=20, color = "black", family = "Times New Roman"), #sets size of x and y axis labels
+        axis.text.x=element_text(vjust = .95, hjust = 0.9, family = "Times New Roman"),
+        legend.title=element_text(family = "Times New Roman"), 
+        legend.text=element_text(family = "Times New Roman"),
+        axis.title=element_text(size=20,face="bold", family = "Times New Roman"))
+print(males.training)
+dev.off() 
+```
+```{r Male Training With Error Bars, echo = FALSE}
+print(males.training)
+```
+
+## Create mean and standard deviation table for females
+```{r}
+#Session 1
+Females.1 <- tapply(Females$Training.1, as.character(Females$Exposure), mean, na.rm=TRUE)
+Females.1 <- as.data.frame(Females.1)
+Females.1$Exposure <- ActualGroupOrder
+colnames(Females.1)[1] <- "Mean" #fix column name
+Females.stdev.1 <- tapply(Females$Training.1, as.character(Females$Exposure), std.error, na.rm=TRUE)
+Females.1$Stdev <- Females.stdev.1
+Females.1$Session <- rep("1", 4)
+
+#Session 2
+Females.2 <- tapply(Females$Training.2, as.character(Females$Exposure), mean, na.rm=TRUE)
+Females.2 <- as.data.frame(Females.2)
+Females.2$Exposure <- ActualGroupOrder
+colnames(Females.2)[1] <- "Mean" #fix column name
+Females.stdev.2 <- tapply(Females$Training.2, as.character(Females$Exposure), std.error, na.rm=TRUE)
+Females.2$Stdev <- Females.stdev.2
+Females.2$Session <- rep("2", 4)
+
+#Session 3
+Females.3 <- tapply(Females$Training.3, as.character(Females$Exposure), mean, na.rm=TRUE)
+Females.3 <- as.data.frame(Females.3)
+Females.3$Exposure <- ActualGroupOrder
+colnames(Females.3)[1] <- "Mean" #fix column name
+Females.stdev.3 <- tapply(Females$Training.3, as.character(Females$Exposure), std.error, na.rm=TRUE)
+Females.3$Stdev <- Females.stdev.3
+Females.3$Session <- rep("3", 4)
+
+#Session 4
+Females.4 <- tapply(Females$Training.4, as.character(Females$Exposure), mean, na.rm=TRUE)
+Females.4 <- as.data.frame(Females.4)
+Females.4$Exposure <- ActualGroupOrder
+colnames(Females.4)[1] <- "Mean" #fix column name
+Females.stdev.4 <- tapply(Females$Training.4, as.character(Females$Exposure), std.error, na.rm=TRUE)
+Females.4$Stdev <- Females.stdev.4
+Females.4$Session <- rep("4", 4)
+
+#Session 5
+Females.5 <- tapply(Females$Training.5, as.character(Females$Exposure), mean, na.rm=TRUE)
+Females.5 <- as.data.frame(Females.5)
+Females.5$Exposure <- ActualGroupOrder
+colnames(Females.5)[1] <- "Mean" #fix column name
+Females.stdev.5 <- tapply(Females$Training.5, as.character(Females$Exposure), std.error, na.rm=TRUE)
+Females.5$Stdev <- Females.stdev.5
+Females.5$Session <- rep("5", 4)
+
+#Session 6
+Females.6 <- tapply(Females$Training.6, as.character(Females$Exposure), mean, na.rm=TRUE)
+Females.6 <- as.data.frame(Females.6)
+Females.6$Exposure <- ActualGroupOrder
+colnames(Females.6)[1] <- "Mean" #fix column name
+Females.stdev.6 <- tapply(Females$Training.6, as.character(Females$Exposure), std.error, na.rm=TRUE)
+Females.6$Stdev <- Females.stdev.6
+Females.6$Session <- rep("6", 4)
+
+#Merge all tables
+Females_training_combined <- rbind(Females.1, Females.2, Females.3, Females.4, Females.5, Females.6)
+Females_training_combined <- Females_training_combined[ ,c(2,1,3,4)]
+Females_training_combined$Session <- as.numeric(as.vector(Females_training_combined$Session)) #convert "Session" to a numeric variable so the x-axis adjusts accordingly
+names(Females_training_combined)[1] <- "Exposure"
+
+#Adjust numbers to be a percent instead of a decimal
+Females_training_combined$Mean <- Females_training_combined$Mean * 100
+Females_training_combined$Stdev <- Females_training_combined$Stdev * 100
+
+#Create error bar data
+Females_training_combined$Upper <- Females_training_combined$Mean + Females_training_combined$Stdev
+Females_training_combined$Lower <- Females_training_combined$Mean - Females_training_combined$Stdev
+
+Females_training_combined$Exposure <- factor(Females_training_combined$Exposure, levels=c("CON", "PAE", "CON+Iron", "PAE+Iron"))
+```
+
+## Graph Female T-maze Learning- with Error Bars
+```{r}
+png("TmazeLearning_Females_StdError_PAExFe_Linegraph_B&W.png", units="in", width=8, height=6, res=600) 
+
+females.training <- ggplot(data=Females_training_combined, aes(x=Session, y=Mean, group=Exposure)) +
+  geom_point(aes(shape=Exposure)) +
+  scale_shape_manual(values=c(15, 17, 18, 19)) +
+  geom_line(aes(linetype=Exposure, color = Exposure)) +
+  scale_linetype_manual(values=c("solid", "longdash", "dotted", "twodash")) +
+  scale_y_continuous(expand = c(0,0), limits = c(0,105))+ 
+  scale_color_hue(labels = c("MD", "PAE", "MD+Iron", "PAE+Iron")) +
+  geom_errorbar(aes(ymin=Lower, ymax=Upper), width=.2) +
+  ggtitle("Female Learning Curve on the T-maze") +
+  ylab(expression("% Correct Trials")) + 
+  xlab(expression("Session Number")) +
+  geom_hline(yintercept=50, linetype="dashed") +
+  geom_hline(yintercept=75) +
+  scale_color_manual(values=c("CON" = "#000000",
+                             "PAE" = "#000000",
+                             "CON+Iron" = "#000000",
+                             "PAE+Iron" = "#000000"
+                             )) +
+  theme(plot.title = element_text(hjust = 0.5, size=18, family = "Times New Roman"), 
+        legend.key=element_blank(), 
+        axis.title.y = element_text(size = 20, family = "Times New Roman"),
+        axis.title.x = element_text(size = 20, family = "Times New Roman"),
+        panel.grid.major = element_blank(), #gets rid of major gridlines
+        panel.grid.minor = element_blank(), #gets rid of minor gridlines
+        panel.background = element_blank(), #turns background white instead of gray
+        axis.line = element_line(colour = "black"), 
+        axis.text=element_text(size=20, color = "black", family = "Times New Roman"), #sets size of x and y axis labels
+        axis.text.x=element_text(vjust = .95, hjust = 0.9, family = "Times New Roman"),
+        legend.title=element_text(family = "Times New Roman"), 
+        legend.text=element_text(family = "Times New Roman"),
+        axis.title=element_text(size=20,face="bold", family = "Times New Roman"))
+print(females.training)
+dev.off() 
+```
+```{r Female Training No Error Bars, echo = FALSE}
+print(females.training)
+```
+
+### Males- Equalize Row Number by Exposure
+```{r}
+#Figure out how many rows of empty NA's are needed to equalize the treatment groups
+Groupcount <- Males %>% count(Exposure) #Calculate how many individual Males there are per treatment group
+NumPoints <- max(Groupcount$n) #Create the variable "NumPoints" to count the # of points in the final graphs
+DiffFunc <- function(x) NumPoints - x #Create the function "DiffFunc" to calculate the number of NA rows to be added
+DiffPoints <- as.data.frame(tapply(Groupcount$n, as.character(Groupcount$Exposure), DiffFunc)) #Calculate number of NA rows to be added to each treatment group
+DiffPoints$Exposure <- ActualGroupOrder #add new column so that # of points to be added is assigned to exposure
+colnames(DiffPoints)[1] <- "NumberN" #rename column
+Nrow <- sum(DiffPoints$NumberN) #figure out how many total rows will be added to the DF_extra dataframe
+MDH2O <- DiffPoints[1,1] #for each of these, it is creating a variable for the "vector" below
+MDFe <- DiffPoints[2,1]
+AlcH2O <- DiffPoints[3,1]
+AlcFe <- DiffPoints[4,1] 
+
+#Add extra rows of NAs to equalize groups
+DF_extra <- data.frame(matrix(NA, nrow = Nrow, ncol = 19)) #create an empty dataframe filled with NA's
+vector <- rep(c("CON", "CON+Iron", "PAE", "PAE+Iron"), times = c(MDH2O, MDFe, AlcH2O, AlcFe)) #create the vector to add the treatment groups to the NA matrix
+DF_extra$Exposure <- vector #add in the Exposure column to the DF_extra dataframe
+DF_extra <- DF_extra[,c(1:4,20,5:19)] #rearrange the columns so that they are in the same order as the original DF
+DF_extra <- setNames(DF_extra, names(Males)) #set the names of the new df to match the original df
+Males_new <- rbind(Males, DF_extra) #Rbind the 2 dataframes so that we now have equal treatment group sizes
+print(Males_new %>% count(Exposure)) #check that the groups are now equal
+#rearrange to be in order of Treatment, otherwise the dots get accidentally reassigned to the wrong group
+Males_new <- Males_new[order(Males_new$Exposure), ]
+Male_NumPoints <- NumPoints
+```
+#### Number of Missing Points to Expect in Male Graphs
+```{r echo = FALSE}
+print(Nrow)
+```
+
+### Females- Equalize Row Number by Exposure
+```{r}
+#Figure out how many rows of empty NA's are needed to equalize the treatment groups
+Groupcount <- Females %>% count(Exposure) #Calculate how many individual Females there are per treatment group
+NumPoints <- max(Groupcount$n) #Create the variable "NumPoints" to count the # of points in the final graphs
+DiffFunc <- function(x) NumPoints - x #Create the function "DiffFunc" to calculate the number of NA rows to be added
+DiffPoints <- as.data.frame(tapply(Groupcount$n, as.character(Groupcount$Exposure), DiffFunc)) #Calculate number of NA rows to be added to each treatment group
+DiffPoints$Exposure <- ActualGroupOrder #add new column so that # of points to be added is assigned to exposure
+colnames(DiffPoints)[1] <- "NumberN" #rename column
+Nrow <- sum(DiffPoints$NumberN) #figure out how many total rows will be added to the DF_extra dataframe
+MDH2O <- DiffPoints[1,1] #for each of these, it is creating a variable for the "vector" below
+MDFe <- DiffPoints[2,1]
+AlcH2O <- DiffPoints[3,1]
+AlcFe <- DiffPoints[4,1] 
+
+#Add extra rows of NAs to equalize groups
+DF_extra <- data.frame(matrix(NA, nrow = Nrow, ncol = 19)) #create an empty dataframe filled with NA's
+vector <- rep(c("CON", "CON+Iron", "PAE", "PAE+Iron"), times = c(MDH2O, MDFe, AlcH2O, AlcFe)) #create the vector to add the treatment groups to the NA matrix
+DF_extra$Exposure <- vector #add in the Exposure column to the DF_extra dataframe
+DF_extra <- DF_extra[,c(1:4,20,5:19)] #rearrange the columns so that they are in the same order as the original DF
+DF_extra <- setNames(DF_extra, names(Females)) #set the names of the new df to match the original df
+Females_new <- rbind(Females, DF_extra) #Rbind the 2 dataframes so that we now have equal treatment group sizes
+print(Females_new %>% count(Exposure)) #check that the groups are now equal
+#rearrange to be in order of Treatment, otherwise the dots get accidentally reassigned to the wrong group
+Females_new <- Females_new[order(Females_new$Exposure), ]
+Female_NumPoints <- NumPoints
+```
+#### Number of Missing Points to Expect in Female Graphs
+```{r echo = FALSE}
+print(Nrow)
+```
+
+# Remaking 30s Delay Data as Barplots
+## Males 30s Delay
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+Mean <- tapply(Males_new$X30s.Delay, as.character(Males_new$Exposure), mean, na.rm=TRUE) #change column
+Mean <- as.data.frame(rep(Mean, each = Male_NumPoints))
+Mean$Exposure <- rep(ActualGroupOrder, each = Male_NumPoints)
+colnames(Mean)[1] <- "Mean"
+
+Stdev <- tapply(Males_new$X30s.Delay, as.character(Males_new$Exposure), sd, na.rm=TRUE) #change column
+Stdev <- as.data.frame(rep(Stdev, each = Male_NumPoints))
+Stdev$Exposure <- rep(ActualGroupOrder, each = Male_NumPoints)
+colnames(Stdev)[1] <- "Stdev"
+
+dataframe_combine <- cbind(Mean, Stdev, Males_new$X30s.Delay) #change column
+colnames(dataframe_combine)[5] <- "Value"
+dataframe_combine <- dataframe_combine[-2]
+
+dataframe_combine$Upper <- dataframe_combine$Mean + dataframe_combine$Stdev
+dataframe_combine$Lower <- dataframe_combine$Mean - dataframe_combine$Stdev
+
+dataframe_combine$Value <- dataframe_combine$Value * 100
+dataframe_combine$Mean <- dataframe_combine$Mean * 100
+dataframe_combine$Upper <- dataframe_combine$Upper * 100
+dataframe_combine$Lower <- dataframe_combine$Lower * 100
+
+#Make Graph#
+png("Tmaze_Male_30sDelay_AllData_PAExFe_Dotplot_B&W.png", units="in", width=7, height=7, res=600) 
+
+sets <- c("CON", "PAE", "CON+Iron", "PAE+Iron")
+
+p<- ggplot(dataframe_combine, aes(x=Exposure, y=Mean)) + 
+  geom_bar(stat="identity", color="black", aes(fill = Exposure),
+           position=position_dodge()) +
+  scale_fill_manual(values=c("CON" = "grey100",
+                             "PAE" = "grey51",
+                             "CON+Iron" = "grey75",
+                             "PAE+Iron" = "grey30"
+                             )) +
+  geom_errorbar(aes(ymin=Lower, ymax=Upper), width=.2,
+                position=position_dodge(.9)) + 
+  geom_point(aes(x=Exposure, y=Value),
+             size = 1.25, shape = 19, position = position_jitter(width=.25, height = 0)) +
+  scale_y_continuous(expand = c(0,0), limits = c(0,105)) +
+  ggtitle("Males- Percent Correct Trials with 30s Delay") +
+  ylab(expression("Correct Trials (%)")) + 
+  theme(plot.title = element_text(hjust = 0.5, size=18, family = "Times New Roman"), 
+        axis.title.x = element_blank(), #gets rid of x-axis label
+        axis.title.y = element_text(size = 20, family = "Times New Roman"),
+        panel.grid.major = element_blank(), #gets rid of major gridlines
+        panel.grid.minor = element_blank(), #gets rid of minor gridlines
+        panel.background = element_blank(), #turns background white instead of gray
+        axis.line = element_line(colour = "black"), 
+        legend.position="none", #gets rid of legend
+        axis.text=element_text(size=20, color = "black", family = "Times New Roman"), #sets size of x and y axis labels
+        axis.text.x=element_text(angle = 45, vjust = .95, hjust = 0.9, family = "Times New Roman"),
+        axis.title=element_text(size=20,face="bold", family = "Times New Roman")) + 
+  scale_x_discrete (limits = sets)
+print(p)
+dev.off() 
+```
+```{r Male Percent Correct Trials 30s Delay Barplot, echo = FALSE}
+print(p)
+```
+
+## Females Sessions to Criterion
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+Mean <- tapply(Females_new$X30s.Delay, as.character(Females_new$Exposure), mean, na.rm=TRUE) #change column
+Mean <- as.data.frame(rep(Mean, each = Female_NumPoints))
+Mean$Exposure <- rep(ActualGroupOrder, each = Female_NumPoints)
+colnames(Mean)[1] <- "Mean"
+
+Stdev <- tapply(Females_new$X30s.Delay, as.character(Females_new$Exposure), sd, na.rm=TRUE) #change column
+Stdev <- as.data.frame(rep(Stdev, each = Female_NumPoints))
+Stdev$Exposure <- rep(ActualGroupOrder, each = Female_NumPoints)
+colnames(Stdev)[1] <- "Stdev"
+
+dataframe_combine <- cbind(Mean, Stdev, Females_new$X30s.Delay) #change column
+colnames(dataframe_combine)[5] <- "Value"
+dataframe_combine <- dataframe_combine[-2]
+
+dataframe_combine$Upper <- dataframe_combine$Mean + dataframe_combine$Stdev
+dataframe_combine$Lower <- dataframe_combine$Mean - dataframe_combine$Stdev
+
+dataframe_combine$Value <- dataframe_combine$Value * 100
+dataframe_combine$Mean <- dataframe_combine$Mean * 100
+dataframe_combine$Upper <- dataframe_combine$Upper * 100
+dataframe_combine$Lower <- dataframe_combine$Lower * 100
+
+#Make Graph#
+png("Tmaze_Female_30sDelay_AllData_PAExFe_Dotplot_B&W.png", units="in", width=7, height=7, res=600) 
+
+sets <- c("CON", "PAE", "CON+Iron", "PAE+Iron")
+
+p<- ggplot(dataframe_combine, aes(x=Exposure, y=Mean)) + 
+  geom_bar(stat="identity", color="black", aes(fill = Exposure),
+           position=position_dodge()) +
+  scale_fill_manual(values=c("CON" = "grey100",
+                             "PAE" = "grey51",
+                             "CON+Iron" = "grey75",
+                             "PAE+Iron" = "grey30"
+                             )) +
+  geom_errorbar(aes(ymin=Lower, ymax=Upper), width=.2,
+                position=position_dodge(.9)) + 
+  geom_point(aes(x=Exposure, y=Value),
+             size = 1.25, shape = 19, position = position_jitter(width=.25, height = 0)) +
+  scale_y_continuous(expand = c(0,0), limits = c(0,105)) +
+  ggtitle("Females- Percent Correct Trials with 30s Delay") +
+  ylab(expression("Correct Trials (%)")) + 
+  theme(plot.title = element_text(hjust = 0.5, size=18, family = "Times New Roman"), 
+        axis.title.x = element_blank(), #gets rid of x-axis label
+        axis.title.y = element_text(size = 20, family = "Times New Roman"),
+        panel.grid.major = element_blank(), #gets rid of major gridlines
+        panel.grid.minor = element_blank(), #gets rid of minor gridlines
+        panel.background = element_blank(), #turns background white instead of gray
+        axis.line = element_line(colour = "black"), 
+        legend.position="none", #gets rid of legend
+        axis.text=element_text(size=20, color = "black", family = "Times New Roman"), #sets size of x and y axis labels
+        axis.text.x=element_text(angle = 45, vjust = .95, hjust = 0.9, family = "Times New Roman"),
+        axis.title=element_text(size=20,face="bold", family = "Times New Roman")) + 
+  scale_x_discrete (limits = sets)
+print(p)
+dev.off() 
+```
+```{r Female Percent Correct Trials 30s Delay Barplot, echo = FALSE}
+print(p)
+```
+
+# Remaking 60s Delay Data as Barplots
+## Males 60s Delay
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+Mean <- tapply(Males_new$X60s.Delay, as.character(Males_new$Exposure), mean, na.rm=TRUE) #change column
+Mean <- as.data.frame(rep(Mean, each = Male_NumPoints))
+Mean$Exposure <- rep(ActualGroupOrder, each = Male_NumPoints)
+colnames(Mean)[1] <- "Mean"
+
+Stdev <- tapply(Males_new$X60s.Delay, as.character(Males_new$Exposure), sd, na.rm=TRUE) #change column
+Stdev <- as.data.frame(rep(Stdev, each = Male_NumPoints))
+Stdev$Exposure <- rep(ActualGroupOrder, each = Male_NumPoints)
+colnames(Stdev)[1] <- "Stdev"
+
+dataframe_combine <- cbind(Mean, Stdev, Males_new$X60s.Delay) #change column
+colnames(dataframe_combine)[5] <- "Value"
+dataframe_combine <- dataframe_combine[-2]
+
+dataframe_combine$Upper <- dataframe_combine$Mean + dataframe_combine$Stdev
+dataframe_combine$Lower <- dataframe_combine$Mean - dataframe_combine$Stdev
+
+dataframe_combine$Value <- dataframe_combine$Value * 100
+dataframe_combine$Mean <- dataframe_combine$Mean * 100
+dataframe_combine$Upper <- dataframe_combine$Upper * 100
+dataframe_combine$Lower <- dataframe_combine$Lower * 100
+
+#Make Graph#
+png("Tmaze_Male_60sDelay_AllData_PAExFe_Dotplot_B&W.png", units="in", width=7, height=7, res=600) 
+
+sets <- c("CON", "PAE", "CON+Iron", "PAE+Iron")
+
+p<- ggplot(dataframe_combine, aes(x=Exposure, y=Mean)) + 
+  geom_bar(stat="identity", color="black", aes(fill = Exposure),
+           position=position_dodge()) +
+  scale_fill_manual(values=c("CON" = "grey100",
+                             "PAE" = "grey51",
+                             "CON+Iron" = "grey75",
+                             "PAE+Iron" = "grey30"
+                             )) +
+  geom_errorbar(aes(ymin=Lower, ymax=Upper), width=.2,
+                position=position_dodge(.9)) + 
+  geom_point(aes(x=Exposure, y=Value),
+             size = 1.25, shape = 19, position = position_jitter(width=.25, height = 0)) +
+  scale_y_continuous(expand = c(0,0), limits = c(0,105)) +
+  ggtitle("Males- Percent Correct Trials with 60s Delay") +
+  ylab(expression("Correct Trials (%)")) + 
+  theme(plot.title = element_text(hjust = 0.5, size=18, family = "Times New Roman"), 
+        axis.title.x = element_blank(), #gets rid of x-axis label
+        axis.title.y = element_text(size = 20, family = "Times New Roman"),
+        panel.grid.major = element_blank(), #gets rid of major gridlines
+        panel.grid.minor = element_blank(), #gets rid of minor gridlines
+        panel.background = element_blank(), #turns background white instead of gray
+        axis.line = element_line(colour = "black"), 
+        legend.position="none", #gets rid of legend
+        axis.text=element_text(size=20, color = "black", family = "Times New Roman"), #sets size of x and y axis labels
+        axis.text.x=element_text(angle = 45, vjust = .95, hjust = 0.9, family = "Times New Roman"),
+        axis.title=element_text(size=20,face="bold", family = "Times New Roman")) + 
+  scale_x_discrete (limits = sets)
+print(p)
+dev.off() 
+```
+```{r Male Percent Correct Trials 60s Delay Barplot, echo = FALSE}
+print(p)
+```
+
+## Females Trials to Criterion
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+Mean <- tapply(Females_new$X60s.Delay, as.character(Females_new$Exposure), mean, na.rm=TRUE) #change column
+Mean <- as.data.frame(rep(Mean, each = Female_NumPoints))
+Mean$Exposure <- rep(ActualGroupOrder, each = Female_NumPoints)
+colnames(Mean)[1] <- "Mean"
+
+Stdev <- tapply(Females_new$X60s.Delay, as.character(Females_new$Exposure), sd, na.rm=TRUE) #change column
+Stdev <- as.data.frame(rep(Stdev, each = Female_NumPoints))
+Stdev$Exposure <- rep(ActualGroupOrder, each = Female_NumPoints)
+colnames(Stdev)[1] <- "Stdev"
+
+dataframe_combine <- cbind(Mean, Stdev, Females_new$X60s.Delay) #change column
+colnames(dataframe_combine)[5] <- "Value"
+dataframe_combine <- dataframe_combine[-2]
+
+dataframe_combine$Upper <- dataframe_combine$Mean + dataframe_combine$Stdev
+dataframe_combine$Lower <- dataframe_combine$Mean - dataframe_combine$Stdev
+
+dataframe_combine$Value <- dataframe_combine$Value * 100
+dataframe_combine$Mean <- dataframe_combine$Mean * 100
+dataframe_combine$Upper <- dataframe_combine$Upper * 100
+dataframe_combine$Lower <- dataframe_combine$Lower * 100
+
+#Make Graph#
+png("Tmaze_Female_60sDelay_AllData_PAExFe_Dotplot_B&W.png", units="in", width=7, height=7, res=600) 
+
+sets <- c("CON", "PAE", "CON+Iron", "PAE+Iron")
+
+p<- ggplot(dataframe_combine, aes(x=Exposure, y=Mean)) + 
+  geom_bar(stat="identity", color="black", aes(fill = Exposure),
+           position=position_dodge()) +
+  scale_fill_manual(values=c("CON" = "grey100",
+                             "PAE" = "grey51",
+                             "CON+Iron" = "grey75",
+                             "PAE+Iron" = "grey30"
+                             )) +
+  geom_errorbar(aes(ymin=Lower, ymax=Upper), width=.2,
+                position=position_dodge(.9)) + 
+  geom_point(aes(x=Exposure, y=Value),
+             size = 1.25, shape = 19, position = position_jitter(width=.25, height = 0)) +
+  scale_y_continuous(expand = c(0,0), limits = c(0,105)) +
+  ggtitle("Females- Percent Correct Trials with 60s Delay") +
+  ylab(expression("Correct Trials (%)")) + 
+  theme(plot.title = element_text(hjust = 0.5, size=18, family = "Times New Roman"), 
+        axis.title.x = element_blank(), #gets rid of x-axis label
+        axis.title.y = element_text(size = 20, family = "Times New Roman"),
+        panel.grid.major = element_blank(), #gets rid of major gridlines
+        panel.grid.minor = element_blank(), #gets rid of minor gridlines
+        panel.background = element_blank(), #turns background white instead of gray
+        axis.line = element_line(colour = "black"), 
+        legend.position="none", #gets rid of legend
+        axis.text=element_text(size=20, color = "black", family = "Times New Roman"), #sets size of x and y axis labels
+        axis.text.x=element_text(angle = 45, vjust = .95, hjust = 0.9, family = "Times New Roman"),
+        axis.title=element_text(size=20,face="bold", family = "Times New Roman")) + 
+  scale_x_discrete (limits = sets)
+print(p)
+dev.off() 
+```
+```{r Female Percent Correct Trials 60s Delay Barplot, echo = FALSE}
+print(p)
+```
+
+# Session Information
+```{r, echo = FALSE}
+session_info <- devtools::session_info()
+print(session_info)
+```
